@@ -1,0 +1,455 @@
+---
+import Icon from "./Icon.astro";
+
+const currentPath = Astro.url.pathname;
+const isIndexPage = currentPath === "/";
+
+// Navigation links with icons
+const navLinks = [
+  {
+    href: isIndexPage ? "#motor-busqueda" : "/",
+    i18nKey: "Navbar-1",
+    label: "Listado de Secuestrados",
+    iconDesktop: "ListadoSecuestrados",
+    iconMobile: "ListadoSecuestradosMovil",
+    showOn: [
+      "/",
+      "/subir-informacion",
+      "/listado-de-fallecidos",
+      "/panel-admin",
+      "/login",
+      "/estadisticas",
+    ],
+  },
+  {
+    href: "/subir-informacion",
+    i18nKey: "Navbar-2",
+    label: "Subir Información",
+    iconDesktop: "SubirInfo",
+    iconMobile: "SubirInfoMovil",
+    showOn: [
+      "/",
+      "/listado-de-fallecidos",
+      "/panel-admin",
+      "/login",
+      "/estadisticas",
+    ],
+  },
+  {
+    href: "/listado-de-fallecidos",
+    i18nKey: "Navbar-3",
+    label: "Listado de Fallecidos",
+    iconDesktop: "ListadoFallecidos",
+    iconMobile: "ListadoFallecidosMovil",
+    showOn: [
+      "/",
+      "/subir-informacion",
+      "/panel-admin",
+      "/login",
+      "/estadisticas",
+    ],
+  },
+  {
+    href: "/estadisticas",
+    i18nKey: "Navbar-4",
+    label: "Estadísticas",
+    iconDesktop: "Estadistica",
+    iconMobile: "EstadisticaMovil",
+    showOn: [
+      "/",
+      "/listado-de-fallecidos",
+      "/subir-informacion",
+      "/panel-admin",
+      "/login",
+    ],
+  },
+];
+
+// Filter visible links based on current path
+const visibleLinks = navLinks.filter((link) =>
+  link.showOn.includes(currentPath),
+);
+---
+
+<style>
+  /* Scale down icons for the smaller navbar */
+  .nav-icon :global(.icon) {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    flex-shrink: 0;
+    display: inline-flex;
+  }
+  .nav-icon-mobile :global(.icon) {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+  }
+</style>
+
+<nav
+  class="fixed top-0 left-0 right-0 z-50 bg-card navbar-shadow theme-transition"
+>
+  <div class="container mx-auto px-4">
+    <div class="flex items-center h-16">
+      <!-- Logo Container -->
+      <div class="flex-1 flex items-center justify-start">
+        <a
+          href="/"
+          class="font-display text-xl font-bold text-primary whitespace-nowrap"
+          style="font-family: 'Playfair Display', serif;"
+        >
+          DataTracker
+        </a>
+      </div>
+
+      <!-- Desktop Navigation (Centered) -->
+      <div class="hidden md:flex items-center justify-center space-x-4">
+        {
+          visibleLinks.map((link, index) => (
+            <>
+              <a
+                href={link.href}
+                class="text-foreground/80 hover:text-primary transition-colors duration-300 text-sm font-medium flex items-center nav-icon whitespace-nowrap"
+              >
+                <Icon iconName={link.iconDesktop} alt={link.label} />
+                <span data-i18n={link.i18nKey}>{link.label}</span>
+              </a>
+              {index < visibleLinks.length - 1 && (
+                <span class="text-muted-foreground/50 text-lg font-light select-none">
+                  |
+                </span>
+              )}
+            </>
+          ))
+        }
+      </div>
+
+      <!-- Right side controls Container -->
+      <div class="flex-1 flex items-center justify-end">
+        <div class="hidden md:flex items-center space-x-4">
+          <!-- Language Selector -->
+          <button
+            id="lang-toggle-desktop"
+            class="flex items-center space-x-1 text-sm text-foreground/80 hover:text-primary transition-colors duration-300"
+            aria-label="Change language"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path
+                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+              ></path>
+            </svg>
+            <span id="lang-text-desktop" class="uppercase font-medium">ES</span>
+          </button>
+
+          <!-- Theme Toggle -->
+          <button
+            id="theme-toggle"
+            class="toggle-switch bg-muted"
+            aria-label="Toggle dark mode"
+          >
+            <span
+              id="theme-toggle-thumb"
+              class="toggle-switch-thumb flex items-center justify-center translate-x-1"
+            >
+              <!-- Sun icon (light mode) -->
+              <svg
+                id="sun-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3 h-3 text-primary"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <!-- Moon icon (dark mode) -->
+              <svg
+                id="moon-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3 h-3 text-primary hidden"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button
+          id="mobile-menu-button"
+          class="md:hidden p-2 text-foreground"
+          aria-label="Toggle menu"
+        >
+          <svg
+            id="menu-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg
+            id="close-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div
+      id="mobile-menu"
+      class="md:hidden hidden py-4 border-t border-border fade-in"
+    >
+      <div class="flex flex-col space-y-4">
+        {
+          visibleLinks.map((link) => (
+            <a
+              href={link.href}
+              class="text-foreground/80 hover:text-primary transition-colors duration-300 text-sm font-medium px-2 flex items-center nav-icon-mobile"
+            >
+              <Icon iconName={link.iconMobile} alt={link.label} />
+              <span data-i18n={link.i18nKey}>{link.label}</span>
+            </a>
+          ))
+        }
+
+        <div
+          class="flex items-center justify-between px-2 pt-4 border-t border-border"
+        >
+          <!-- Mobile Language Toggle -->
+          <button
+            id="lang-toggle-mobile"
+            class="flex items-center space-x-1 text-sm text-foreground/80"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path
+                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+              ></path>
+            </svg>
+            <span id="lang-text-mobile" class="uppercase font-medium">EN</span>
+          </button>
+
+          <!-- Mobile Theme Toggle -->
+          <button
+            id="mobile-theme-toggle"
+            class="toggle-switch bg-muted"
+            aria-label="Toggle dark mode"
+          >
+            <span
+              id="mobile-theme-toggle-thumb"
+              class="toggle-switch-thumb flex items-center justify-center translate-x-1"
+            >
+              <svg
+                id="mobile-sun-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3 h-3 text-primary"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg
+                id="mobile-moon-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3 h-3 text-primary hidden"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Spacer for fixed navbar -->
+<div class="h-16"></div>
+
+<script>
+  import { getCurrentLang, setLanguage } from "./additionals/scripts/i18n";
+
+  // Mobile menu toggle
+  const mobileMenuButton = document.getElementById("mobile-menu-button");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const menuIcon = document.getElementById("menu-icon");
+  const closeIcon = document.getElementById("close-icon");
+
+  if (mobileMenuButton && mobileMenu && menuIcon && closeIcon) {
+    mobileMenuButton.addEventListener("click", () => {
+      mobileMenu.classList.toggle("hidden");
+      menuIcon.classList.toggle("hidden");
+      closeIcon.classList.toggle("hidden");
+    });
+  }
+
+  // Theme toggle
+  const themeToggle = document.getElementById("theme-toggle");
+  const mobileThemeToggle = document.getElementById("mobile-theme-toggle");
+  const themeToggleThumb = document.getElementById("theme-toggle-thumb");
+  const mobileThemeToggleThumb = document.getElementById(
+    "mobile-theme-toggle-thumb",
+  );
+  const sunIcon = document.getElementById("sun-icon");
+  const moonIcon = document.getElementById("moon-icon");
+  const mobileSunIcon = document.getElementById("mobile-sun-icon");
+  const mobileMoonIcon = document.getElementById("mobile-moon-icon");
+
+  function updateThemeIcons(isDark: boolean) {
+    if (themeToggleThumb) {
+      themeToggleThumb.classList.toggle("translate-x-5", isDark);
+      themeToggleThumb.classList.toggle("translate-x-1", !isDark);
+    }
+    if (mobileThemeToggleThumb) {
+      mobileThemeToggleThumb.classList.toggle("translate-x-5", isDark);
+      mobileThemeToggleThumb.classList.toggle("translate-x-1", !isDark);
+    }
+    if (sunIcon && moonIcon) {
+      sunIcon.classList.toggle("hidden", isDark);
+      moonIcon.classList.toggle("hidden", !isDark);
+    }
+    if (mobileSunIcon && mobileMoonIcon) {
+      mobileSunIcon.classList.toggle("hidden", isDark);
+      mobileMoonIcon.classList.toggle("hidden", !isDark);
+    }
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.classList.toggle("dark");
+    localStorage.setItem("color-theme", isDark ? "dark" : "light");
+    updateThemeIcons(isDark);
+  }
+
+  // Set initial theme state
+  const isDarkInitial =
+    document.documentElement.classList.contains("dark") ||
+    localStorage.getItem("color-theme") === "dark" ||
+    (!localStorage.getItem("color-theme") &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  if (isDarkInitial) {
+    document.documentElement.classList.add("dark");
+  }
+  updateThemeIcons(isDarkInitial);
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", toggleDarkMode);
+  }
+  if (mobileThemeToggle) {
+    mobileThemeToggle.addEventListener("click", toggleDarkMode);
+  }
+
+  // Language toggle
+  const langToggleDesktop = document.getElementById("lang-toggle-desktop");
+  const langToggleMobile = document.getElementById("lang-toggle-mobile");
+  const langTextDesktop = document.getElementById("lang-text-desktop");
+  const langTextMobile = document.getElementById("lang-text-mobile");
+
+  function updateLangText() {
+    const currentLang = getCurrentLang();
+    if (langTextDesktop)
+      langTextDesktop.textContent = currentLang.toUpperCase();
+    if (langTextMobile)
+      langTextMobile.textContent = currentLang === "es" ? "EN" : "ES";
+  }
+
+  function toggleLanguage() {
+    const currentLang = getCurrentLang();
+    const newLang = currentLang === "es" ? "en" : "es";
+    setLanguage(newLang);
+    // Dispatch event for React components to update
+    window.dispatchEvent(
+      new CustomEvent("languagechange", { detail: { language: newLang } }),
+    );
+    updateLangText();
+  }
+
+  updateLangText();
+
+  if (langToggleDesktop) {
+    langToggleDesktop.addEventListener("click", toggleLanguage);
+  }
+  if (langToggleMobile) {
+    langToggleMobile.addEventListener("click", toggleLanguage);
+  }
+</script>

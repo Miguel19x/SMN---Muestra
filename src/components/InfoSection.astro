@@ -1,0 +1,141 @@
+---
+// Get the current language from cookies (server-side)
+const lang = Astro.cookies.get("NEXT_LOCALE")?.value || "es";
+---
+
+<style>
+    .arrow-bounce {
+        animation: arrowBounce 2s infinite;
+    }
+
+    @keyframes arrowBounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(10px);
+        }
+        60% {
+            transform: translateY(5px);
+        }
+    }
+</style>
+
+<section class="py-10 sm:py-16 px-4 sm:px-6 bg-background theme-transition">
+    <div class="container mx-auto max-w-5xl">
+        <!-- Title -->
+        <h2
+            class="text-2xl sm:text-3xl font-bold text-center mb-12"
+            style="font-family: 'Playfair Display', serif;"
+            data-i18n="How-It-Works"
+        >
+            Cómo Funciona
+        </h2>
+
+        <!-- 3-step horizontal flow -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <!-- Step 1: Register -->
+            <article class="text-center">
+                <div
+                    class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
+                >
+                    <span class="text-3xl font-bold text-primary">1</span>
+                </div>
+                <h3
+                    class="font-display text-xl font-semibold text-foreground mb-3"
+                    data-i18n="Step-1-Title"
+                    style="font-family: 'Playfair Display', serif;"
+                >
+                    Registra
+                </h3>
+                <div class="accent-bar-small w-16 mx-auto mb-3"></div>
+                <p
+                    class="text-muted-foreground leading-relaxed text-sm"
+                    data-i18n="Step-1-Desc"
+                    style="font-family: 'Inter', sans-serif;"
+                >
+                    Añade nuevos objetos al inventario con información
+                    detallada: código, categoría, origen, ubicación y más.
+                </p>
+            </article>
+
+            <!-- Step 2: Organize -->
+            <article class="text-center">
+                <div
+                    class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
+                >
+                    <span class="text-3xl font-bold text-primary">2</span>
+                </div>
+                <h3
+                    class="font-display text-xl font-semibold text-foreground mb-3"
+                    data-i18n="Step-2-Title"
+                    style="font-family: 'Playfair Display', serif;"
+                >
+                    Organiza
+                </h3>
+                <div class="accent-bar-small w-16 mx-auto mb-3"></div>
+                <p
+                    class="text-muted-foreground leading-relaxed text-sm"
+                    data-i18n="Step-2-Desc"
+                    style="font-family: 'Inter', sans-serif;"
+                >
+                    Busca y filtra por cualquier campo. El sistema detecta
+                    automáticamente el tipo de búsqueda y ofrece paginación.
+                </p>
+            </article>
+
+            <!-- Step 3: Analyze -->
+            <article class="text-center">
+                <div
+                    class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center"
+                >
+                    <span class="text-3xl font-bold text-primary">3</span>
+                </div>
+                <h3
+                    class="font-display text-xl font-semibold text-foreground mb-3"
+                    data-i18n="Step-3-Title"
+                    style="font-family: 'Playfair Display', serif;"
+                >
+                    Analiza
+                </h3>
+                <div class="accent-bar-small w-16 mx-auto mb-3"></div>
+                <p
+                    class="text-muted-foreground leading-relaxed text-sm"
+                    data-i18n="Step-3-Desc"
+                    style="font-family: 'Inter', sans-serif;"
+                >
+                    Visualiza estadísticas con gráficos interactivos y genera
+                    informes profesionales en PDF con análisis detallado.
+                </p>
+            </article>
+        </div>
+
+        <!-- Arrow indicator to analytics -->
+        <div class="flex flex-col items-center mt-12 sm:mt-16">
+            <a
+                href="/estadisticas"
+                class="flex flex-col items-center text-muted-foreground hover:text-primary transition-colors duration-300"
+                aria-label="Ver analíticas"
+            >
+                <span class="text-sm mb-2" data-i18n="View-Analytics"
+                    >Ver Analíticas</span
+                >
+                <svg
+                    class="w-6 h-6 sm:w-8 sm:h-8 arrow-bounce"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>

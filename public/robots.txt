@@ -1,0 +1,29 @@
+# DataTracker - Robots.txt
+# Allow indexing of public content
+# Block access to administrative areas and API
+
+User-agent: *
+Allow: /
+Allow: /estadisticas
+Allow: /listado-de-fallecidos
+Disallow: /api/
+Disallow: /panel-admin
+Disallow: /login
+Disallow: /auth/
+
+# Permitir acceso específico a health check para monitores
+User-agent: *
+Allow: /api/health
+
+# Crawl-delay para ser cortés con el servidor
+Crawl-delay: 1
+
+# Bloquear bots maliciosos conocidos
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+User-agent: MJ12bot
+Disallow: /
+
+# Sitemap
+Sitemap: https://datatracker-demo.vercel.app/sitemap.xml

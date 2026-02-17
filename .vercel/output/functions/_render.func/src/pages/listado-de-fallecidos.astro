@@ -1,0 +1,79 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ListadoFallecidos from "../components/Listado.tsx";
+import "@/styles/globals.css";
+---
+
+<Layout title="Listado de Fallecidos">
+    <div class="min-h-screen relative">
+        <!-- Background image with chains -->
+        <div
+            class="absolute inset-0 bg-cover bg-center bg-fixed"
+            style="background-image: url('/NO MAS SECUESTROS FONDO PRUEBA 3.jpg');"
+        >
+        </div>
+
+        <!-- Dark overlay gradient for readability -->
+        <div
+            class="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/90 to-slate-950/95"
+        >
+        </div>
+
+        <!-- Content layer -->
+        <div class="relative z-10">
+            <!-- Header Section -->
+            <header class="py-12 lg:py-16 text-center px-4">
+                <h1
+                    class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 drop-shadow-lg"
+                    style="font-family: 'Playfair Display', serif;"
+                    data-i18n="Title-2"
+                >
+                    LISTADO DE FALLECIDOS
+                </h1>
+
+                <!-- Stars -->
+                <div class="flex justify-center gap-1 mb-4">
+                    {
+                        [...Array(7)].map((_) => (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 fill-yellow-400"
+                                viewBox="0 0 24 24"
+                            >
+                                <>
+                                    <path
+                                        stroke="none"
+                                        d="M0 0h24v24H0z"
+                                        fill="none"
+                                    />
+                                    <path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />
+                                </>
+                            </svg>
+                        ))
+                    }
+                </div>
+
+                <!-- Tricolor bar -->
+                <div class="flex justify-center">
+                    <div class="tricolor-bar w-48 sm:w-64 md:w-80">
+                        <div class="tricolor-yellow"></div>
+                        <div class="tricolor-blue"></div>
+                        <div class="tricolor-red"></div>
+                    </div>
+                </div>
+                <p
+                    class="mt-4 sm:mt-6 text-gray-200 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-medium px-4 sm:px-0"
+                    data-i18n="Phrase-2"
+                    style="font-family: 'Inter', sans-serif;"
+                >
+                    ¡Sus nombres jamás deben ser olvidados!
+                </p>
+            </header>
+
+            <!-- Cards Grid -->
+            <main class="container mx-auto px-4 pb-12">
+                <ListadoFallecidos client:load />
+            </main>
+        </div>
+    </div>
+</Layout>

@@ -1,0 +1,99 @@
+---
+import { getCurrentLang } from "./scripts/i18n";
+
+const languages = [
+  { code: "es", name: "Español" },
+  { code: "en", name: "English" },
+];
+
+const currentLang = getCurrentLang();
+
+// Accept variant prop to differentiate between desktop and mobile instances
+const { variant = "" } = Astro.props;
+const selectId = variant ? `language-select-${variant}` : "language-select";
+---
+
+<div class="px-4 py-2">
+  <div class="flex items-center justify-between">
+    <span
+      class="text-sm font-medium text-gray-700 dark:text-gray-200"
+      data-i18n="Menu-Option3">Lenguaje</span
+    >
+    <select
+      id={selectId}
+      name="language"
+      class="language-select appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-1 px-2 pr-8 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+    >
+      {
+        languages.map((lang) => (
+          <option value={lang.code} selected={currentLang === lang.code}>
+            {lang.name}
+          </option>
+        ))
+      }
+    </select>
+  </div>
+</div>
+
+<script>
+  import {
+    updateTranslations,
+    loadLanguage,
+    setLanguage,
+  } from "./scripts/i18n";
+  import type { Language } from "../type/types";
+
+  // Obtener TODOS los selectores de idioma (desktop y móvil)
+  const languageSelects = document.querySelectorAll(
+    ".language-select",
+  ) as NodeListOf<HTMLSelectElement>;
+
+  // Función para sincronizar todos los selectores
+  function syncAllSelectors(newLang: Language) {
+    languageSelects.forEach((select) => {
+      select.value = newLang;
+    });
+  }
+
+  // Agregar event listener a cada selector
+  languageSelects.forEach((select) => {
+    select.addEventListener("change", async (event) => {
+      const target = event.target as HTMLSelectElement;
+      const newLang = target.value as Language;
+
+      try {
+        await loadLanguage(newLang);
+        setLanguage(newLang);
+        updateTranslations(newLang);
+        localStorage.setItem("language", newLang);
+        document.documentElement.lang = newLang;
+
+        // Sincronizar todos los selectores
+        syncAllSelectors(newLang);
+
+        window.dispatchEvent(
+          new CustomEvent("languagechange", { detail: { language: newLang } }),
+        );
+      } catch (error) {
+        console.error("Failed to change language:", error);
+      }
+    });
+  });
+
+  // Initialize with the saved language or the default
+  const savedLang =
+    (localStorage.getItem("language") as Language | null) || "es";
+
+  // Sincronizar todos los selectores al cargar
+  syncAllSelectors(savedLang);
+
+  // Ensure the initial language is loaded and translations are updated
+  loadLanguage(savedLang)
+    .then(() => {
+      setLanguage(savedLang);
+      updateTranslations(savedLang);
+    })
+    .catch((error) => {
+      console.error("Failed to initialize language:", error);
+    });
+</script>

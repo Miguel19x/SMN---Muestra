@@ -1,0 +1,5 @@
+1. Arreglar los mensajes tipo toast y reemplazarlos por unos propios.
+
+2. Necesito que se puedan establecer ubiaciones/direcciones con Google Maps o programas parecidos, y eso sirva para registrar direcciones dentro de los formularios y agregar una lógica completa, que siga la misma linea de seguridad y datos.
+
+3. Mejorar legibilidad y orden de la información.

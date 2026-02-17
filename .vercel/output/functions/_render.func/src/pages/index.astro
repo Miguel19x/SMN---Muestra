@@ -1,0 +1,21 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/header.astro";
+import InfoSection from "../components/InfoSection.astro";
+import MotorDeBusqueda from "../components/MotorDeBusqueda.tsx";
+import TweetCarousel from "../components/TweetCarousel.tsx";
+import "@/styles/globals.css";
+---
+
+<Layout title="No Más Secuestros">
+	<div class="min-h-screen flex flex-col theme-transition">
+		<main class="flex-grow">
+			<Header />
+			<InfoSection />
+			<!-- Motor de búsqueda: crítico, carga inmediata -->
+			<MotorDeBusqueda client:load />
+			<!-- Carrusel de tweets: no crítico, carga cuando el navegador esté inactivo -->
+			<TweetCarousel client:idle />
+		</main>
+	</div>
+</Layout>

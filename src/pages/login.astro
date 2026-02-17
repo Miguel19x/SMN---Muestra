@@ -1,0 +1,11 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LoginForm from '../components/LoginForm.tsx';
+import '@/styles/globals.css';
+---
+
+<Layout title="Login">
+  <main class="container mx-auto mt-8">
+    <LoginForm client:load />
+  </main>
+</Layout>

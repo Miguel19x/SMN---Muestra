@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "@/styles/globals.css";
+import StatsEngine from "@/components/StatsEngine";
+---
+
+<Layout title="DataTracker - Analíticas">
+    <StatsEngine client:load />
+    <div style="height: 60px;"></div>
+</Layout>

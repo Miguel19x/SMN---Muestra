@@ -4,7 +4,7 @@ import type { APIRoute } from 'astro';
  * Sitemap dinámico para SEO
  * 
  * Genera un sitemap.xml con todas las páginas públicas del sitio
- * y casos dinámicos de personas desaparecidas (si aplicable en el futuro)
+ * y casos dinámicos de objetos (si aplicable en el futuro)
  */
 export const GET: APIRoute = async () => {
   const baseUrl = 'https://datatracker-demo.vercel.app';
@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
   const staticPages = [
     { url: '', changefreq: 'daily', priority: 1.0 },
     { url: '/estadisticas', changefreq: 'weekly', priority: 0.8 },
-    { url: '/listado-de-fallecidos', changefreq: 'weekly', priority: 0.9 },
+    { url: '/archivados', changefreq: 'weekly', priority: 0.9 },
     { url: '/subir-informacion', changefreq: 'monthly', priority: 0.7 },
   ];
 

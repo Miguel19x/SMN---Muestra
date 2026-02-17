@@ -1,3 +1,8 @@
+import { z } from 'zod';
+import { r as redis } from '../../chunks/redis_CYcAgJqj.mjs';
+import { s as secureJsonResponse } from '../../chunks/securityHeaders_B-pWwsKs.mjs';
+import { r as rateLimitApiGet } from '../../chunks/bruteForceProtection_Bg_DvZdH.mjs';
+import '../../chunks/app.config_BO63yO4S.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const TWITTER_BEARER_TOKEN = process.env.BEARER_TOKEN;
@@ -102,94 +107,122 @@ function formatTweetDate(dateString) {
   }
 }
 
-// Cache de 15 minutos para evitar rate limiting de Twitter
-const CACHE_TTL = 60 * 15; // 15 minutos en segundos
-const CACHE_KEY = 'twitter_carousel_tweets';
-
-// Import dinámico de redis para evitar errores si no está disponible
-let redis = null;
-try {
-    const redisModule = await import('../../chunks/redis_DF8_68s9.mjs');
-    redis = redisModule.default;
-} catch (e) {
-    console.warn('Redis module not available');
-}
-
-async function GET({ request }) {
-    try {
-        const url = new URL(request.url);
-        const type = url.searchParams.get('type') || 'project'; // 'project' o 'whitelist'
-        const count = parseInt(url.searchParams.get('count') || '10');
-
-        const cacheKey = `${CACHE_KEY}_${type}_${count}`;
-
-        // Intentar obtener del cache (solo si Redis está disponible)
-        if (redis) {
-            try {
-                const cachedData = await redis.get(cacheKey);
-                if (cachedData) {
-                    return new Response(JSON.stringify(cachedData), {
-                        status: 200,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Cache': 'HIT'
-                        }
-                    });
-                }
-            } catch (redisError) {
-                console.warn('Redis cache read failed:', redisError.message);
-            }
-        }
-
-        // Obtener tweets frescos
-        let tweets;
-        if (type === 'whitelist') {
-            tweets = await getWhitelistedAccountsTweets(count);
-        } else {
-            tweets = await getProjectTweets(count);
-        }
-
-        // Formatear tweets para la respuesta
-        const formattedTweets = tweets.map(tweet => ({
-            id: tweet.id,
-            text: tweet.text,
-            createdAt: tweet.created_at,
-            formattedDate: tweet.created_at ? formatTweetDate(tweet.created_at) : '',
-            author: tweet.author ? {
-                name: tweet.author.name,
-                username: tweet.author.username,
-                profileImage: tweet.author.profile_image_url,
-            } : null,
-            metrics: tweet.public_metrics || null,
-        }));
-
-        // Guardar en cache (solo si Redis está disponible)
-        if (redis) {
-            try {
-                await redis.set(cacheKey, formattedTweets, { ex: CACHE_TTL });
-            } catch (redisError) {
-                console.warn('Redis cache write failed:', redisError.message);
-            }
-        }
-
-        return new Response(JSON.stringify(formattedTweets), {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Cache': 'MISS'
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching tweets:', error);
-        return new Response(JSON.stringify({
-            error: 'No se pudieron cargar los tweets',
-            tweets: []
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+const TWEETS_CACHE_TTL = 900;
+const CACHE_KEY_PREFIX = "twitter_carousel_tweets";
+const GetTweetsQuerySchema = z.object({
+  type: z.enum(["project", "whitelist"]).optional().default("project"),
+  count: z.coerce.number().int().min(1).max(50).optional().default(10)
+});
+const GET = async ({ request }) => {
+  try {
+    const rateLimitResult = await rateLimitApiGet(request);
+    if (!rateLimitResult.success) {
+      return secureJsonResponse(
+        { error: rateLimitResult.message },
+        429,
+        rateLimitResult.headers
+      );
     }
-}
+    const url = new URL(request.url);
+    const queryResult = GetTweetsQuerySchema.safeParse({
+      type: url.searchParams.get("type"),
+      count: url.searchParams.get("count")
+    });
+    if (!queryResult.success) {
+      return secureJsonResponse(
+        {
+          error: "Parámetros inválidos",
+          details: queryResult.error.format()
+        },
+        400
+      );
+    }
+    const { type, count } = queryResult.data;
+    const cacheKey = `${CACHE_KEY_PREFIX}_${type}_${count}`;
+    try {
+      const cachedData = await redis.get(cacheKey);
+      if (cachedData) {
+        return secureJsonResponse(
+          cachedData,
+          200,
+          {
+            ...rateLimitResult.headers,
+            "X-Cache": "HIT"
+          }
+        );
+      }
+    } catch (redisError) {
+      console.warn("Redis cache read failed", {
+        error: redisError instanceof Error ? redisError.message : "Unknown",
+        cacheKey
+      });
+    }
+    let tweets;
+    try {
+      if (type === "whitelist") {
+        tweets = await getWhitelistedAccountsTweets(count);
+      } else {
+        tweets = await getProjectTweets(count);
+      }
+    } catch (twitterError) {
+      console.error("Twitter API failed", {
+        error: twitterError instanceof Error ? twitterError.message : "Unknown",
+        type,
+        count
+      });
+      return secureJsonResponse(
+        {
+          error: "No se pudieron cargar los tweets",
+          tweets: []
+        },
+        200
+        // 200 para no romper el frontend
+      );
+    }
+    const formattedTweets = tweets.map((tweet) => ({
+      id: tweet.id || "",
+      text: tweet.text || "",
+      createdAt: tweet.created_at || "",
+      formattedDate: tweet.created_at ? formatTweetDate(tweet.created_at) : "",
+      author: tweet.author ? {
+        name: tweet.author.name || "",
+        username: tweet.author.username || "",
+        profileImage: tweet.author.profile_image_url
+      } : null,
+      metrics: tweet.public_metrics || null
+    }));
+    try {
+      await redis.set(cacheKey, formattedTweets, {
+        ex: TWEETS_CACHE_TTL
+      });
+    } catch (redisError) {
+      console.warn("Redis cache write failed", {
+        error: redisError instanceof Error ? redisError.message : "Unknown",
+        cacheKey
+      });
+    }
+    return secureJsonResponse(
+      formattedTweets,
+      200,
+      {
+        ...rateLimitResult.headers,
+        "X-Cache": "MISS"
+      }
+    );
+  } catch (error) {
+    console.error("GET /api/tweets failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    return secureJsonResponse(
+      {
+        error: "Error interno del servidor",
+        tweets: []
+      },
+      500
+    );
+  }
+};
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
     __proto__: null,

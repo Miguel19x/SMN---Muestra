@@ -1,13 +1,13 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import UploadEngine from '../components/UploadEngine.tsx';
-import ConsentModal from '../components/additionals/ConsentModal.tsx';
-import '@/styles/globals.css';
+import Layout from "../layouts/Layout.astro";
+import UploadEngine from "../components/UploadEngine.tsx";
+import ConsentModal from "../components/additionals/ConsentModal.tsx";
+import "@/styles/globals.css";
 ---
 
-<Layout title="Subir Información">
+<Layout title="DataTracker - Registrar">
     <ConsentModal client:load />
-    <div style="height: 60px;"/>
+    <div style="height: 60px;"></div>
     <UploadEngine client:load />
-    <div style="height: 60px;"/>
+    <div style="height: 60px;"></div>
 </Layout>

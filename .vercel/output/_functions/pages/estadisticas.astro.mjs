@@ -1,11 +1,10 @@
-import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_CJfq-tyP.mjs';
-import { $ as $$Layout } from '../chunks/Layout_BnVrAAn4.mjs';
-/* empty css                                        */
+import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_D0FKrmaD.mjs';
+import { a as useLanguage, L as LanguageProvider, $ as $$Layout } from '../chunks/i18n_BgOPVVWt.mjs';
+/* empty css                                      */
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Users, Camera, Baby, AlertTriangle, FileText } from 'lucide-react';
-import { L as LanguageProvider, u as useLanguage } from '../chunks/i18n_Bd6mPn--.mjs';
-import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Area, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { ResponsiveContainer, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Area, Sector, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { c as categorizarProfesion } from '../chunks/professionCategorizer_Bsh3D5TZ.mjs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -49,6 +48,34 @@ const STATS_COLORS = {
   muted: "#94a3b8"
   // Gray for labels
 };
+function useStripRechartsGTabIndex() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const strip = () => {
+      root.querySelectorAll("[tabindex]").forEach((el) => el.removeAttribute("tabindex"));
+      root.querySelectorAll("svg").forEach((svg) => {
+        svg.setAttribute("focusable", "false");
+        svg.style.outline = "none";
+      });
+      root.querySelectorAll("g, path, rect, circle, sector").forEach((el) => {
+        el.style.outline = "none";
+        el.style.boxShadow = "none";
+      });
+    };
+    strip();
+    const observer = new MutationObserver(() => strip());
+    observer.observe(root, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["tabindex"]
+    });
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
 const CHART_PALETTE = [
   STATS_COLORS.primary,
   STATS_COLORS.critical,
@@ -58,6 +85,32 @@ const CHART_PALETTE = [
   STATS_COLORS.gray2,
   STATS_COLORS.gray3
 ];
+const EnhancedTooltip = ({ active, payload, label, total, isMobile }) => {
+  const { translate } = useLanguage();
+  if (!active || !payload || payload.length === 0) return null;
+  const value = payload[0].value;
+  const name = label || payload[0].name;
+  const percentage = total ? (value / total * 100).toFixed(1) : null;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: `bg-card border border-primary/20 rounded-md shadow-xl backdrop-blur-sm ${isMobile ? "p-1.5 max-w-[140px]" : "p-3 max-w-[200px]"}`,
+      style: { pointerEvents: "none" },
+      children: [
+        /* @__PURE__ */ jsx("p", { className: `font-semibold text-foreground mb-1 truncate leading-tight ${isMobile ? "text-[10px]" : "text-[13px]"}`, children: name }),
+        /* @__PURE__ */ jsxs("div", { className: `flex items-center ${isMobile ? "gap-1.5" : "gap-2"}`, children: [
+          /* @__PURE__ */ jsx("span", { className: `font-bold text-primary ${isMobile ? "text-sm" : "text-xl"}`, children: value }),
+          /* @__PURE__ */ jsx("span", { className: `text-muted-foreground ${isMobile ? "text-[9px]" : "text-[11px]"}`, children: translate("Chart-Cases") })
+        ] }),
+        percentage && /* @__PURE__ */ jsxs("p", { className: `text-muted-foreground mt-1 font-medium leading-tight ${isMobile ? "text-[9px]" : "text-[11px]"}`, children: [
+          percentage,
+          "% ",
+          translate("Chart-Of-Total")
+        ] })
+      ]
+    }
+  );
+};
 function ChartCard({
   title,
   children,
@@ -84,10 +137,12 @@ const CustomXAxisTick = ({ x, y, payload }) => {
     {
       x: 0,
       y: 0,
-      dy: 12,
-      textAnchor: "middle",
+      dx: -8,
+      dy: 10,
+      textAnchor: "end",
       fill: "#94a3b8",
-      fontSize: 9,
+      fontSize: 8,
+      transform: "rotate(-35)",
       style: { fontFamily: "system-ui, sans-serif" },
       children: truncated
     }
@@ -98,130 +153,252 @@ function StatsBarChart({
   height = 250,
   color = STATS_COLORS.primary
 }) {
-  return /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(BarChart, { data, margin: { top: 20, right: 10, left: 0, bottom: 40 }, children: [
-    /* @__PURE__ */ jsx(CartesianGrid, { strokeDasharray: "3 3", stroke: "#334155", vertical: false }),
-    /* @__PURE__ */ jsx(
-      XAxis,
+  const { translate } = useLanguage();
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const selectedItem = selectedIndex !== null ? data[selectedIndex] : null;
+  const selectedPercent = useMemo(() => {
+    if (!selectedItem || total === 0) return null;
+    return (selectedItem.value / total * 100).toFixed(1);
+  }, [selectedItem, total]);
+  const containerRef = useStripRechartsGTabIndex();
+  return /* @__PURE__ */ jsxs("div", { className: "w-full", ref: containerRef, children: [
+    /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(
+      BarChart,
       {
-        dataKey: "name",
-        tick: /* @__PURE__ */ jsx(CustomXAxisTick, {}),
-        tickLine: false,
-        axisLine: { stroke: "#334155" },
-        interval: 0,
-        height: 45
+        data,
+        margin: { top: 20, right: 10, left: 0, bottom: 50 },
+        accessibilityLayer: true,
+        children: [
+          /* @__PURE__ */ jsx(CartesianGrid, { strokeDasharray: "3 3", stroke: "#334155", vertical: false }),
+          /* @__PURE__ */ jsx(
+            XAxis,
+            {
+              dataKey: "name",
+              tick: /* @__PURE__ */ jsx(CustomXAxisTick, {}),
+              tickLine: false,
+              axisLine: { stroke: "#334155" },
+              interval: 0,
+              height: 45
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            YAxis,
+            {
+              tick: { fill: STATS_COLORS.muted, fontSize: 11 },
+              tickLine: false,
+              axisLine: false,
+              width: 35
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            Tooltip,
+            {
+              allowEscapeViewBox: { x: true, y: true },
+              content: /* @__PURE__ */ jsx(EnhancedTooltip, { total, isMobile: typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches }),
+              cursor: { fill: "rgba(100, 116, 139, 0.1)" },
+              wrapperStyle: { zIndex: 50, pointerEvents: "none" },
+              offset: 12
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            Bar,
+            {
+              dataKey: "value",
+              fill: color,
+              stroke: "transparent",
+              strokeWidth: 0,
+              radius: [4, 4, 0, 0],
+              isAnimationActive: false,
+              onClick: (_, index) => {
+                if (typeof index !== "number") return;
+                setSelectedIndex((prev) => prev === index ? null : index);
+              },
+              children: data.map((_, index) => /* @__PURE__ */ jsx(
+                Cell,
+                {
+                  fill: selectedIndex === index ? STATS_COLORS.secondary : color
+                },
+                `cell-${index}`
+              ))
+            }
+          )
+        ]
       }
-    ),
-    /* @__PURE__ */ jsx(
-      YAxis,
-      {
-        tick: { fill: STATS_COLORS.muted, fontSize: 11 },
-        tickLine: false,
-        axisLine: false,
-        width: 35
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      Tooltip,
-      {
-        contentStyle: {
-          backgroundColor: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
-        },
-        formatter: (value) => value !== void 0 ? [`${value} casos`, ""] : ["", ""],
-        cursor: { fill: "rgba(100, 116, 139, 0.1)" }
-      }
-    ),
-    /* @__PURE__ */ jsx(Bar, { dataKey: "value", fill: color, radius: [4, 4, 0, 0] })
-  ] }) });
+    ) }),
+    selectedItem && /* @__PURE__ */ jsxs("div", { className: "mt-3 rounded-lg border border-border bg-background/50 px-3 py-2 text-sm", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1", children: [
+        /* @__PURE__ */ jsx("span", { className: "font-semibold text-foreground", children: selectedItem.name }),
+        /* @__PURE__ */ jsx("span", { className: "font-bold text-primary", children: selectedItem.value })
+      ] }),
+      selectedPercent && /* @__PURE__ */ jsxs("div", { className: "text-xs text-muted-foreground", children: [
+        selectedPercent,
+        "% ",
+        translate("Chart-Of-Total")
+      ] })
+    ] })
+  ] });
 }
 function StatsDonutChart({
   data,
   height = 200,
   colors = CHART_PALETTE
 }) {
+  const { translate } = useLanguage();
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  return /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(PieChart, { children: [
-    /* @__PURE__ */ jsx(
-      Pie,
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const selectedItem = selectedIndex !== null ? data[selectedIndex] : null;
+  const selectedPercent = useMemo(() => {
+    if (!selectedItem || total === 0) return null;
+    return (selectedItem.value / total * 100).toFixed(1);
+  }, [selectedItem, total]);
+  const containerRef = useStripRechartsGTabIndex();
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(max-width: 640px)");
+    const apply = () => setIsMobile(mql.matches);
+    apply();
+    mql.addEventListener("change", apply);
+    return () => mql.removeEventListener("change", apply);
+  }, []);
+  const selectedIndexRef = useRef(selectedIndex);
+  selectedIndexRef.current = selectedIndex;
+  const renderPieShape = useCallback((props) => {
+    const {
+      cx,
+      cy,
+      innerRadius,
+      outerRadius,
+      startAngle,
+      endAngle,
+      fill,
+      index
+    } = props;
+    const isSelected = typeof index === "number" && index === selectedIndexRef.current;
+    return /* @__PURE__ */ jsx(
+      Sector,
       {
-        data,
-        cx: "50%",
-        cy: "50%",
-        innerRadius: 45,
-        outerRadius: 70,
-        paddingAngle: 2,
-        dataKey: "value",
-        label: ({ name, value }) => `${name}: ${(value / total * 100).toFixed(0)}%`,
-        labelLine: false,
-        children: data.map((_, index) => /* @__PURE__ */ jsx(Cell, { fill: colors[index % colors.length] }, `cell-${index}`))
+        cx,
+        cy,
+        innerRadius,
+        outerRadius: isSelected ? outerRadius + 4 : outerRadius,
+        startAngle,
+        endAngle,
+        fill,
+        stroke: "none"
       }
-    ),
-    /* @__PURE__ */ jsx(
-      Tooltip,
-      {
-        contentStyle: {
-          backgroundColor: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
-        },
-        formatter: (value) => typeof value === "number" ? [`${value} casos (${(value / total * 100).toFixed(1)}%)`, ""] : ["", ""]
-      }
-    )
-  ] }) });
+    );
+  }, []);
+  return /* @__PURE__ */ jsxs("div", { className: "w-full", ref: containerRef, children: [
+    /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(PieChart, { accessibilityLayer: true, margin: { top: 0, right: isMobile ? 45 : 35, left: isMobile ? 45 : 35, bottom: 0 }, children: [
+      /* @__PURE__ */ jsx(
+        Pie,
+        {
+          data,
+          cx: "50%",
+          cy: "50%",
+          innerRadius: 45,
+          outerRadius: 70,
+          paddingAngle: 2,
+          dataKey: "value",
+          shape: renderPieShape,
+          isAnimationActive: false,
+          onClick: (_, index) => {
+            if (typeof index !== "number") return;
+            setSelectedIndex((prev) => prev === index ? null : index);
+          },
+          stroke: "transparent",
+          strokeWidth: 0,
+          label: ({ name, value }) => {
+            const percent = (value / total * 100).toFixed(0);
+            return isMobile ? `${percent}%` : `${name}: ${percent}%`;
+          },
+          labelLine: false,
+          children: data.map((_, index) => /* @__PURE__ */ jsx(Cell, { fill: colors[index % colors.length] }, `cell-${index}`))
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        Tooltip,
+        {
+          allowEscapeViewBox: { x: true, y: true },
+          content: /* @__PURE__ */ jsx(EnhancedTooltip, { total, isMobile }),
+          wrapperStyle: { zIndex: 50, pointerEvents: "none" },
+          offset: 12
+        }
+      )
+    ] }) }),
+    selectedItem && /* @__PURE__ */ jsxs("div", { className: "mt-3 rounded-lg border border-border bg-background/50 px-3 py-2 text-sm", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1", children: [
+        /* @__PURE__ */ jsx("span", { className: "font-semibold text-foreground", children: selectedItem.name }),
+        /* @__PURE__ */ jsx("span", { className: "font-bold text-primary", children: selectedItem.value })
+      ] }),
+      selectedPercent && /* @__PURE__ */ jsxs("div", { className: "text-xs text-muted-foreground", children: [
+        selectedPercent,
+        "% ",
+        translate("Chart-Of-Total")
+      ] })
+    ] })
+  ] });
 }
 function StatsTimelineChart({
   data,
   height = 250
 }) {
-  return /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(AreaChart, { data, margin: { top: 10, right: 10, left: -10, bottom: 0 }, children: [
-    /* @__PURE__ */ jsx("defs", { children: /* @__PURE__ */ jsxs("linearGradient", { id: "colorCases", x1: "0", y1: "0", x2: "0", y2: "1", children: [
-      /* @__PURE__ */ jsx("stop", { offset: "5%", stopColor: STATS_COLORS.primary, stopOpacity: 0.3 }),
-      /* @__PURE__ */ jsx("stop", { offset: "95%", stopColor: STATS_COLORS.primary, stopOpacity: 0 })
-    ] }) }),
-    /* @__PURE__ */ jsx(CartesianGrid, { strokeDasharray: "3 3", stroke: "#e2e8f0", vertical: false, className: "dark:stroke-slate-700" }),
-    /* @__PURE__ */ jsx(
-      XAxis,
-      {
-        dataKey: "date",
-        tick: { fill: STATS_COLORS.muted, fontSize: 11 },
-        tickLine: false,
-        axisLine: { stroke: "#e2e8f0" }
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      YAxis,
-      {
-        tick: { fill: STATS_COLORS.muted, fontSize: 11 },
-        tickLine: false,
-        axisLine: false
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      Tooltip,
-      {
-        contentStyle: {
-          backgroundColor: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
-        },
-        formatter: (value) => value !== void 0 ? [`${value} casos`, ""] : ["", ""]
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      Area,
-      {
-        type: "monotone",
-        dataKey: "cases",
-        stroke: STATS_COLORS.primary,
-        strokeWidth: 2,
-        fill: "url(#colorCases)"
-      }
-    )
-  ] }) });
+  const total = data.reduce((sum, item) => sum + item.cases, 0);
+  const containerRef = useStripRechartsGTabIndex();
+  return /* @__PURE__ */ jsx("div", { ref: containerRef, children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height, children: /* @__PURE__ */ jsxs(
+    AreaChart,
+    {
+      data,
+      margin: { top: 10, right: 10, left: -10, bottom: 0 },
+      accessibilityLayer: true,
+      children: [
+        /* @__PURE__ */ jsx("defs", { children: /* @__PURE__ */ jsxs("linearGradient", { id: "colorCases", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+          /* @__PURE__ */ jsx("stop", { offset: "5%", stopColor: STATS_COLORS.primary, stopOpacity: 0.3 }),
+          /* @__PURE__ */ jsx("stop", { offset: "95%", stopColor: STATS_COLORS.primary, stopOpacity: 0 })
+        ] }) }),
+        /* @__PURE__ */ jsx(CartesianGrid, { strokeDasharray: "3 3", stroke: "#334155", strokeOpacity: 0.35, vertical: false, className: "dark:stroke-slate-700" }),
+        /* @__PURE__ */ jsx(
+          XAxis,
+          {
+            dataKey: "date",
+            tick: { fill: STATS_COLORS.muted, fontSize: 11 },
+            tickLine: false,
+            axisLine: false
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          YAxis,
+          {
+            tick: { fill: STATS_COLORS.muted, fontSize: 11 },
+            tickLine: false,
+            axisLine: false
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          Tooltip,
+          {
+            allowEscapeViewBox: { x: true, y: true },
+            content: /* @__PURE__ */ jsx(EnhancedTooltip, { total, isMobile: typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches }),
+            wrapperStyle: { zIndex: 50, pointerEvents: "none" },
+            offset: 12
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          Area,
+          {
+            type: "monotone",
+            dataKey: "cases",
+            stroke: STATS_COLORS.primary,
+            strokeWidth: 2,
+            fill: "url(#colorCases)",
+            isAnimationActive: false
+          }
+        )
+      ]
+    }
+  ) }) });
 }
 
 function calculateMean(data) {
@@ -306,126 +483,263 @@ function calculateDescriptiveStats(data) {
     cv: calculateCV(validData)
   };
 }
-function generateConclusions(report) {
+function calculateSubgroupPercentage(data, filterFn) {
+  if (data.length === 0) return 0;
+  const count = data.filter(filterFn).length;
+  return count / data.length * 100;
+}
+function analyzeTemporalTrends(monthlyTrend) {
+  if (monthlyTrend.length < 4) return null;
+  const recent = monthlyTrend.slice(-3);
+  const previous = monthlyTrend.slice(-6, -3);
+  const avgRecent = calculateMean(recent.map((m) => m.count));
+  const avgPrevious = calculateMean(previous.map((m) => m.count));
+  if (avgPrevious === 0) return null;
+  const change = (avgRecent - avgPrevious) / avgPrevious * 100;
+  if (change > 50) return `Alerta de crecimiento acelerado: Se ha detectado un incremento del ${change.toFixed(1)}% en el promedio de registros del último trimestre respecto al anterior. Este crecimiento acelerado del inventario requiere una revisión de la capacidad de almacenamiento y los procesos logísticos para garantizar una gestión eficiente.`;
+  if (change < -50) return `Desaceleración significativa: Se observa una disminución del ${Math.abs(change).toFixed(1)}% en el flujo de registros recientes. Esto podría indicar una estabilización del inventario, una reducción en las adquisiciones, o posibles demoras en los procesos de registro que deben ser verificadas.`;
+  return null;
+}
+function identifyCategoryConcentration(data) {
+  const typeA = calculateSubgroupPercentage(data, (d) => d.categoria === "Tipo A");
+  const typeB = calculateSubgroupPercentage(data, (d) => d.categoria === "Tipo B");
+  if (typeA > 70) return `La categoría Tipo A domina el inventario con un ${typeA.toFixed(1)}% del total, lo que sugiere una concentración excesiva que podría afectar la diversificación del catálogo y la resiliencia operativa ante cambios en la demanda.`;
+  if (typeB > 70) return `La categoría Tipo B domina el inventario con un ${typeB.toFixed(1)}% del total. Se recomienda evaluar si esta concentración obedece a una estrategia deliberada o a una deficiencia en la captación de otros tipos de artículos.`;
+  if (Math.abs(typeA - typeB) < 10) return `El inventario presenta una distribución equilibrada entre Tipo A (${typeA.toFixed(1)}%) y Tipo B (${typeB.toFixed(1)}%), lo que indica una buena diversificación por categoría.`;
+  return null;
+}
+function generateConclusions(report, rawData = []) {
   const conclusions = [];
-  const photoPercentage = report.casesWithPhoto / report.totalCases * 100;
-  if (photoPercentage >= 80) {
-    conclusions.push(`El ${photoPercentage.toFixed(1)}% de los casos de presos políticos cuenta con registro fotográfico, lo cual es fundamental para la documentación de violaciones a los derechos humanos.`);
-  } else if (photoPercentage >= 50) {
-    conclusions.push(`El ${photoPercentage.toFixed(1)}% de los presos políticos documentados cuenta con fotografía. Es importante continuar recopilando material visual para fortalecer los expedientes de denuncia internacional.`);
-  } else {
-    conclusions.push(`Solo el ${photoPercentage.toFixed(1)}% de los casos cuenta con registro fotográfico. La falta de documentación visual dificulta las denuncias ante organismos internacionales de derechos humanos.`);
+  const formatDateSpan = (d) => {
+    const date = new Date(d);
+    return date.toLocaleDateString("es-VE", { year: "numeric", month: "long", day: "numeric" });
+  };
+  conclusions.push(`Resumen del inventario: El presente informe analiza ${report.totalCases} objetos registrados en el sistema${report.periodStart ? ` desde el ${formatDateSpan(report.periodStart)}` : ""}${report.periodEnd ? ` hasta el ${formatDateSpan(report.periodEnd)}` : ""}. El volumen de datos permite identificar patrones operativos significativos para la optimización de la gestión.`);
+  const categoryFinding = identifyCategoryConcentration(rawData);
+  if (categoryFinding) {
+    conclusions.push(`Distribución por categoría: ${categoryFinding}`);
   }
-  if (report.ageStats) {
-    const { mean, stdDev, mode } = report.ageStats;
-    conclusions.push(`La edad promedio de los presos políticos es de ${mean.toFixed(1)} años (desviación estándar: ±${stdDev.toFixed(1)} años), siendo ${mode} años la edad más frecuente. Esto evidencia que la persecución política afecta principalmente a la población en edad productiva.`);
-    const minorsGroup = report.ageGroups.find((g) => g.label.includes("Menores"));
-    if (minorsGroup && minorsGroup.percentage > 5) {
-      conclusions.push(`GRAVE VIOLACIÓN: El ${minorsGroup.percentage.toFixed(1)}% de los detenidos son menores de edad (${minorsGroup.count} personas). La detención de menores constituye una violación flagrante de la Convención sobre los Derechos del Niño y el Estatuto de Roma.`);
+  const newItemsGroup = report.ageGroups.find((g) => g.label.includes("Nuevos"));
+  const oldItemsGroup = report.ageGroups.find((g) => g.label.includes("Antiguos"));
+  if (newItemsGroup && oldItemsGroup) {
+    if (oldItemsGroup.percentage > 40) {
+      conclusions.push(`Envejecimiento del inventario: El ${oldItemsGroup.percentage.toFixed(1)}% de los objetos registrados supera los 10 años de antigüedad (${oldItemsGroup.count} artículos). Se recomienda una auditoría de obsolescencia y un plan de renovación para mantener la calidad y operatividad del inventario.`);
+    } else if (newItemsGroup.percentage > 60) {
+      conclusions.push(`Inventario renovado: El ${newItemsGroup.percentage.toFixed(1)}% de los artículos tiene menos de 2 años de antigüedad, lo que refleja una política activa de adquisiciones recientes y un inventario en buen estado operativo.`);
     }
-  }
-  const { masculino, femenino, total } = report.genderDistribution;
-  const malePercentage = masculino / total * 100;
-  const femalePercentage = femenino / total * 100;
-  if (malePercentage > 70) {
-    conclusions.push(`El ${malePercentage.toFixed(1)}% de los presos políticos son hombres, lo cual refleja patrones de persecución selectiva. Sin embargo, el ${femalePercentage.toFixed(1)}% de mujeres detenidas también evidencia que la represión no discrimina por género.`);
-  } else if (femalePercentage > 30) {
-    conclusions.push(`El ${femalePercentage.toFixed(1)}% de los presos políticos son mujeres, una proporción significativamente alta que evidencia la persecución sistemática sin distinción de género.`);
   }
   if (report.topProfessions.length > 0) {
-    const topProf = report.topProfessions.slice(0, 3);
-    const topProfNames = topProf.map((p) => p.value).join(", ");
-    conclusions.push(`Los sectores más afectados por la detención arbitraria son: ${topProfNames}. Este patrón sugiere persecución dirigida a grupos específicos de la sociedad civil.`);
-    const studentProf = report.topProfessions.find((p) => p.value.includes("Estudiante"));
-    if (studentProf && studentProf.pi > 10) {
-      conclusions.push(`ALERTA: Los estudiantes representan el ${studentProf.pi.toFixed(1)}% de los presos políticos, evidenciando la criminalización del activismo estudiantil y la represión del derecho a la protesta.`);
+    const topSubcat = report.topProfessions[0];
+    let subcatText = `Clasificación predominante: La subcategoría "${topSubcat.value}" concentra el ${topSubcat.pi.toFixed(1)}% del inventario total.`;
+    if (report.topProfessions.length >= 3) {
+      const top3 = report.topProfessions.slice(0, 3);
+      const top3Pct = top3.reduce((sum, p) => sum + p.pi, 0);
+      subcatText += ` Las tres subcategorías principales (${top3.map((p) => p.value).join(", ")}) representan conjuntamente el ${top3Pct.toFixed(1)}% del inventario.`;
+      if (top3Pct > 75) {
+        subcatText += ` Esta alta concentración indica una especialización marcada que podría ser una ventaja competitiva o un riesgo de dependencia.`;
+      }
     }
-    const activistProf = report.topProfessions.find(
-      (p) => p.value.includes("Político") || p.value.includes("Activista") || p.value.includes("DDHH")
-    );
-    if (activistProf) {
-      conclusions.push(`El ${activistProf.pi.toFixed(1)}% de los detenidos son activistas políticos, defensores de derechos humanos o dirigentes de partidos de oposición, confirmando el carácter político de las detenciones.`);
+    conclusions.push(subcatText);
+  }
+  if (report.topConfinementLocations.length > 0) {
+    const topLoc = report.topConfinementLocations[0];
+    const concentrationIndex = topLoc.pi;
+    if (concentrationIndex > 30) {
+      conclusions.push(`Concentración de almacenamiento: El ${concentrationIndex.toFixed(1)}% del inventario se encuentra en ${topLoc.value}. Esta alta centralización puede representar un riesgo logístico significativo. Se recomienda evaluar una estrategia de distribución para reducir la vulnerabilidad ante eventualidades locales.`);
+    } else if (report.topConfinementLocations.length >= 5) {
+      conclusions.push(`Distribución geográfica saludable: El inventario se encuentra distribuido en múltiples ubicaciones, con ${topLoc.value} como sede principal (${concentrationIndex.toFixed(1)}%). Esta dispersión reduce riesgos y facilita la logística de distribución regional.`);
     }
   }
-  if (report.topLocations.length > 0) {
-    const topLoc = report.topLocations[0];
-    if (topLoc.pi > 15) {
-      conclusions.push(`Se identifica una alta concentración de detenciones en ${topLoc.value} (${topLoc.pi.toFixed(1)}% del total), lo cual podría indicar operativos coordinados de represión en esta zona.`);
-    }
+  const trendAnalysis = analyzeTemporalTrends(report.monthlyTrend);
+  if (trendAnalysis) {
+    conclusions.push(trendAnalysis);
   }
-  if (report.monthlyTrend.length >= 3) {
-    const lastThreeMonths = report.monthlyTrend.slice(-3);
-    const firstMonth = lastThreeMonths[0].count;
-    const lastMonth = lastThreeMonths[lastThreeMonths.length - 1].count;
-    if (lastMonth > firstMonth * 1.5) {
-      conclusions.push(`ALERTA: Se observa un incremento alarmante en las detenciones durante los últimos meses, lo cual podría indicar una escalada represiva. Es urgente la atención de la comunidad internacional.`);
-    } else if (lastMonth < firstMonth * 0.5) {
-      conclusions.push(`Se observa una disminución en el registro de nuevas detenciones. Esto podría deberse a liberaciones, pero también a dificultades en la documentación de casos nuevos.`);
-    }
+  const photoPct = report.casesWithPhoto / report.totalCases * 100;
+  const completenessPct = report.casesWithCompleteData / report.totalCases * 100;
+  if (photoPct < 50 || completenessPct < 50) {
+    conclusions.push(`Calidad de datos: Solo el ${completenessPct.toFixed(1)}% de los registros cuenta con ficha técnica completa y el ${photoPct.toFixed(1)}% con imagen asociada. Se recomienda implementar validaciones más estrictas en el proceso de registro y campañas de actualización de datos para mejorar la trazabilidad del inventario.`);
+  } else {
+    conclusions.push(`Calidad de datos: El ${completenessPct.toFixed(1)}% de los registros cuenta con ficha completa y el ${photoPct.toFixed(1)}% incluye imagen. Estos indicadores reflejan un proceso de registro robusto y confiable.`);
   }
-  conclusions.push(`En total, se han documentado ${report.totalCases} casos de presos políticos. Esta información constituye evidencia de violaciones sistemáticas a los derechos humanos en Venezuela y debe ser utilizada para exigir la liberación inmediata de todos los detenidos políticos, así como para sustentar denuncias ante la Corte Penal Internacional, la CIDH y otros organismos internacionales.`);
+  conclusions.push(`Recomendaciones operativas: Con base en los patrones identificados en este análisis de ${report.totalCases} objetos, se sugiere: (1) revisar periódicamente la distribución por categoría para mantener un balance óptimo, (2) monitorear las tendencias temporales de registro para anticipar picos de demanda, y (3) fortalecer los procesos de documentación fotográfica para garantizar la trazabilidad completa del inventario.`);
   return conclusions;
 }
+const normalizeNationality = (nat) => {
+  if (!nat) return "No especificada";
+  const n = nat.toLowerCase().trim();
+  if (n === "nacional" || n === "venezuela" || n === "vzla" || n === "ve" || n === "venezolana") return "Nacional";
+  return nat.trim();
+};
+const normalizeLocation = (loc) => {
+  if (!loc) return "";
+  const l = loc.toLowerCase().trim();
+  if (l.includes("saliendo") || l.includes("ingresando") || l.includes("camino a") || l.includes("cerca de") || l.includes("frente a") || l.length > 80) {
+    if (l.includes("pnb") && l.includes("barcelona")) return "Barcelona (Anzoátegui) - PNB";
+    if (l.includes("barcelona")) return "C.P. Agroproductivo Barcelona (Anzoátegui)";
+    return "";
+  }
+  if (l.includes("helicoide")) return "El Helicoide (SEBIN - Caracas)";
+  if (l.includes("dgcim") && l.includes("boleita")) return "DGCIM Boleíta (Zona 7 - Caracas)";
+  if (l.includes("zona 7") || l.includes("pnb") && l.includes("boleíta")) return "DGCIM Boleíta (Zona 7 - Caracas)";
+  if (l.includes("la tumba")) return "La Tumba (SEBIN - Plaza Venezuela)";
+  if (l.includes("sebin") && l.includes("maracaibo")) return "SEBIN Maracaibo (Zulia)";
+  if (l.includes("sebin") && l.includes("naguanagua")) return "SEBIN Naguanagua (Carabobo)";
+  if (l.includes("sebin") && l.includes("caroní") || l.includes("sebin") && l.includes("caroni")) return "SEBIN Caroní (Bolívar)";
+  if (l.includes("tocuyito") || l.includes("internado") && l.includes("carabobo")) {
+    return "Internado Judicial Carabobo - Tocuyito (Valencia)";
+  }
+  if (l.includes("hombre nuevo") && l.includes("libertador")) return 'C.P. Hombre Nuevo "El Libertador" - Tocuyito (Carabobo)';
+  if (l.includes("tocorón") || l.includes("tocoron")) return "C.P. Tocorón (Aragua)";
+  if (l.includes("alayón") || l.includes("alayon")) return "Retén de Alayón - Maracay (Aragua)";
+  if (l.includes("ramo verde")) return "C.P. Ramo Verde - Los Teques (Miranda)";
+  if (l.includes("yare")) return "C.P. Yare I, II y III - San Fco. de Yare (Miranda)";
+  if (l.includes("rodeo")) return "C.P. El Rodeo - Guatire (Miranda)";
+  if (l.includes("inof") && l.includes("mujeres")) return "INOF (Mujeres) - Los Teques (Miranda)";
+  if (l.includes("cenaprofemil") || l.includes("cenaprof")) return "CENAPROFEMIL - Los Teques (Miranda)";
+  if (l.includes("uribana") || l.includes("david viloria")) return "C.P. David Viloria - Uribana (Lara)";
+  if (l.includes("fénix") || l.includes("fenix")) return "Fénix Lara - Barquisimeto (Lara)";
+  if (l.includes("sabaneta")) return "Cárcel de Sabaneta - Maracaibo (Zulia)";
+  if (l.includes("santa ana") || l.includes("cpo") || l.includes("occidente")) {
+    return "C.P. de Occidente (CPO) - Santa Ana (Táchira)";
+  }
+  if (l.includes("santa inés") || l.includes("santa ines")) {
+    if (l.includes("barinas")) return "Santa Inés (Barinas) - Destacamento Policial";
+    return "C.P. de Occidente (CPO) - Santa Ana (Táchira)";
+  }
+  if (l.includes("dorado") && l.includes("el")) return "Cárcel de El Dorado (Bolívar)";
+  if (l.includes("vista hermosa")) return "Vista Hermosa - Ciudad Bolívar (Bolívar)";
+  if (l.includes("la pica") || l.includes("nelson mandela")) return 'La Pica (Hombre Nuevo "Nelson Mandela") - Maturín';
+  if (l.includes("cepra")) return "CEPRA - Mérida (Región Andina)";
+  if (l.includes("26 de julio") || l.includes("san juan") && l.includes("morros")) {
+    return "C.P. 26 de Julio - San Juan de los Morros (Guárico)";
+  }
+  if (l.includes("internado") && l.includes("trujillo")) return "Internado Judicial de Trujillo";
+  if (l.includes("coro")) return "Comunidad Penitenciaria de Coro (Falcón)";
+  if (l.includes("cumaná") || l.includes("cumana")) return "Internado Judicial de Cumaná (Sucre)";
+  if (l.includes("san antonio") && l.includes("internado")) return "Internado Judicial San Antonio (Nueva Esparta)";
+  if (l.includes("agroproductivo") && l.includes("barcelona")) return "C.P. Agroproductivo Barcelona (Anzoátegui)";
+  if (l.includes("el valle") && !l.includes("tocuyito")) return "Caracas (D.C.) - PNB El Valle";
+  if (l.includes("la yaguara") || l.includes("yaguara")) return "Caracas (D.C.) - PNB La Yaguara";
+  if (l.includes("cicpc") && l.includes("parque carabobo")) return "Caracas (D.C.) - CICPC Parque Carabobo";
+  if (l.includes("cicpc") && l.includes("rosal")) return "Caracas (D.C.) - CICPC El Rosal";
+  if (l.includes("pnb") && l.includes("barcelona")) return "Barcelona (Anzoátegui) - PNB";
+  if (l.includes("destacamento 33") || l.includes("gnb") && l.includes("barinas")) {
+    return "Destacamento 33 GNB - Barinas";
+  }
+  if (l.includes("destacamento 15") || l.includes("gnb") && l.includes("valera")) {
+    return "Destacamento 15 GNB - Valera (Trujillo)";
+  }
+  if (l.includes("brigada 41") || l.includes("blindada")) return "Brigada 41 Blindada - Naguanagua (Carabobo)";
+  if (l.includes("caracas") || l.includes("distrito capital") || l.includes("libertador")) {
+    return "Caracas (Distrito Capital)";
+  }
+  if (l.includes("maracay")) return "Maracay (Aragua)";
+  if (l.includes("valencia") && !l.includes("tocuyito")) return "Valencia (Carabobo)";
+  if (l.includes("barquisimeto")) return "Barquisimeto (Lara)";
+  if (l.includes("maracaibo")) return "Maracaibo (Zulia)";
+  if (l.includes("san cristóbal") || l.includes("san cristobal")) return "San Cristóbal (Táchira)";
+  if (l.includes("maturín") || l.includes("maturin")) return "Maturín (Monagas)";
+  if (l.includes("barcelona") && !l.includes("agroproductivo")) return "Barcelona (Anzoátegui)";
+  if (l.includes("mérida") || l === "merida") return "Mérida (Mérida)";
+  if (l.includes("valera")) return "Valera (Trujillo)";
+  if (l.includes("guanare")) return "Guanare (Portuguesa)";
+  if (l.includes("barinas") && !l.includes("santa")) return "Barinas (Barinas)";
+  if (l.includes("los teques")) return "Los Teques (Miranda)";
+  if (l.includes("ciudad bolívar") || l.includes("ciudad bolivar")) return "Ciudad Bolívar (Bolívar)";
+  if (l.includes("coro")) return "Coro (Falcón)";
+  if (l.includes("catia")) return "Catia (Caracas)";
+  if (l.includes("petare")) return "Petare (Miranda)";
+  if (l.includes("chacao")) return "Chacao (Miranda)";
+  if (l.includes("carabobo")) return "Edo. Carabobo";
+  if (l.includes("zulia")) return "Edo. Zulia";
+  if (l.includes("miranda")) return "Edo. Miranda";
+  if (l.includes("táchira") || l.includes("tachira")) return "Edo. Táchira";
+  if (l.includes("bolívar") || l.includes("bolivar") && !l.includes("bolivariano")) return "Edo. Bolívar";
+  if (l.includes("aragua")) return "Edo. Aragua";
+  if (l.includes("lara")) return "Edo. Lara";
+  if (l.includes("anzoátegui") || l.includes("anzoategui")) return "Edo. Anzoátegui";
+  if (l.includes("monagas")) return "Edo. Monagas";
+  if (l.includes("sucre") && !l.includes("jose")) return "Edo. Sucre";
+  if (l.includes("falcón") || l.includes("falcon")) return "Edo. Falcón";
+  if (l.includes("apure")) return "Edo. Apure";
+  if (l.includes("guárico") || l.includes("guarico")) return "Edo. Guárico";
+  if (l.includes("portuguesa")) return "Edo. Portuguesa";
+  if (l.includes("carúpano") || l.includes("carupano")) return "Carúpano (Sucre) - Centro de Coordinación Policial";
+  if (l.includes("el valle") || l.includes("ei valle") || l.includes("e/ valle")) return "PNB El Valle";
+  if (l.startsWith("edo ") || l.startsWith("edo. ")) {
+    const parts = l.split(" ");
+    if (parts.length > 1) {
+      const stateName = parts.slice(1).map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ");
+      return `Edo. ${stateName}`;
+    }
+  }
+  if (l.includes("nueva esparta")) return "Edo. Nueva Esparta";
+  return loc.trim();
+};
 function generateStatisticalReport(data) {
   const now = /* @__PURE__ */ new Date();
   const totalCases = data.length;
   const casesWithPhoto = data.filter((d) => d.imagen && d.imagen.length > 0).length;
-  const casesWithCompleteData = data.filter((d) => d.nombre && d.edad && d.sexo).length;
-  const dates = data.map((d) => d.fecha).filter((f) => f !== void 0 && f !== null && f.length > 0).sort();
+  const casesWithCompleteData = data.filter((d) => d.nombre && d.antiguedad && d.categoria).length;
+  const dates = data.map((d) => d.fecha_registro).filter((f) => f !== void 0 && f !== null && f.length > 0).sort();
   const periodStart = dates.length > 0 ? dates[0] : null;
   const periodEnd = dates.length > 0 ? dates[dates.length - 1] : null;
-  const ages = data.map((d) => d.edad).filter((age) => age !== void 0 && age !== null && age > 0 && age <= 120);
+  const ages = data.map((d) => d.antiguedad).filter((age) => age !== void 0 && age !== null && age > 0 && age <= 120);
   const ageStats = calculateDescriptiveStats(ages);
-  const minors = data.filter((d) => d.edad !== void 0 && d.edad < 18).length;
-  const adults = data.filter((d) => d.edad !== void 0 && d.edad >= 18 && d.edad < 65).length;
-  const seniors = data.filter((d) => d.edad !== void 0 && d.edad >= 65).length;
-  const ageUnknown = data.filter((d) => d.edad === void 0 || d.edad === null).length;
+  const newItems = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad < 2).length;
+  const recentItems = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 2 && d.antiguedad < 5).length;
+  const standardItems = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 5 && d.antiguedad < 10).length;
+  const oldItems = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 10).length;
+  const ageUnknown = data.filter((d) => d.antiguedad === void 0 || d.antiguedad === null).length;
   const ageGroups = [
-    { label: "Menores de 18", count: minors, percentage: minors / totalCases * 100 },
-    { label: "Adultos (18-64)", count: adults, percentage: adults / totalCases * 100 },
-    { label: "Mayores de 65", count: seniors, percentage: seniors / totalCases * 100 },
-    { label: "Edad no especificada", count: ageUnknown, percentage: ageUnknown / totalCases * 100 }
+    { label: "Nuevos (< 2 años)", count: newItems, percentage: newItems / totalCases * 100 },
+    { label: "Recientes (2-4 años)", count: recentItems, percentage: recentItems / totalCases * 100 },
+    { label: "Estándar (5-9 años)", count: standardItems, percentage: standardItems / totalCases * 100 },
+    { label: "Antiguos (10+ años)", count: oldItems, percentage: oldItems / totalCases * 100 },
+    { label: "Antigüedad no especificada", count: ageUnknown, percentage: ageUnknown / totalCases * 100 }
   ];
-  const normalizeGender = (sex) => {
-    if (!sex) return "U";
-    const s = sex.toLowerCase().trim();
-    if (s === "masculino" || s === "hombre" || s === "m") return "M";
-    if (s === "femenino" || s === "mujer" || s === "f") return "F";
-    return "U";
-  };
-  const genders = data.map((d) => normalizeGender(d.sexo));
-  const masculino = genders.filter((g) => g === "M").length;
-  const femenino = genders.filter((g) => g === "F").length;
+  const categories = data.map((d) => d.categoria || "No especificado");
+  const tipoA = categories.filter((c) => c === "Tipo A").length;
+  const tipoB = categories.filter((c) => c === "Tipo B").length;
   const genderDistribution = {
-    masculino,
-    femenino,
-    noEspecificado: totalCases - masculino - femenino,
+    masculino: tipoA,
+    femenino: tipoB,
+    noEspecificado: totalCases - tipoA - tipoB,
     total: totalCases
   };
-  const professions = data.filter((d) => d.profesion && d.profesion.trim()).map((d) => categorizarProfesion(d.profesion));
+  const professions = data.filter((d) => d.tipo_objeto && d.tipo_objeto.trim()).map((d) => categorizarProfesion(d.tipo_objeto));
   const topProfessions = buildFrequencyTable(professions).slice(0, 10);
-  const normalizeLocation = (loc) => {
-    if (!loc) return "";
-    const l = loc.toLowerCase().trim();
-    if (l.includes("tocuyito")) return "C.P. Tocuyito";
-    if (l.includes("trujillo") || l === "valera") return "Edo. Trujillo";
-    if (l.includes("helicoide")) return "El Helicoide (SEBIN)";
-    if (l.includes("bolivar")) return "Edo. Bolívar";
-    if (l.includes("caracas") || l.includes("distrito capital")) return "Caracas (D.C.)";
-    return loc.trim();
+  const nationalities = data.map((d) => normalizeNationality(d.pais_origen));
+  const nacional = nationalities.filter((n) => n === "Nacional").length;
+  const noEspecificada = nationalities.filter((n) => n === "No especificada").length;
+  const extranjera = totalCases - nacional - noEspecificada;
+  const foreignNationalities = data.filter((d) => d.pais_origen && normalizeNationality(d.pais_origen) !== "Nacional" && normalizeNationality(d.pais_origen) !== "No especificada").map((d) => normalizeNationality(d.pais_origen));
+  const nationalityDistribution = {
+    nacional,
+    extranjera,
+    noEspecificada,
+    total: totalCases,
+    topForeignNationalities: buildFrequencyTable(foreignNationalities).slice(0, 5)
   };
-  const locations = data.filter((d) => d.lugar_de_desaparicion || d.lugar_de_confinamiento).map((d) => {
-    const lugar = d.lugar_de_desaparicion || d.lugar_de_confinamiento || "";
+  const disappearanceLocations = data.filter((d) => d.ultimo_lugar_conocido && d.ultimo_lugar_conocido.trim()).map((d) => {
+    const lugar = d.ultimo_lugar_conocido;
     const parts = lugar.split(",");
     const baseLugar = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
     return normalizeLocation(baseLugar);
   }).filter((l) => l && l.length > 0);
-  const topLocations = buildFrequencyTable(locations).slice(0, 10);
+  const topDisappearanceLocations = buildFrequencyTable(disappearanceLocations).slice(0, 10);
+  const confinementLocations = data.filter((d) => d.ubicacion_actual && d.ubicacion_actual.trim()).map((d) => {
+    const lugar = d.ubicacion_actual;
+    const parts = lugar.split(",");
+    const baseLugar = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
+    return normalizeLocation(baseLugar);
+  }).filter((l) => l && l.length > 0);
+  const topConfinementLocations = buildFrequencyTable(confinementLocations).slice(0, 10);
   const monthlyMap = /* @__PURE__ */ new Map();
   const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   data.forEach((d) => {
-    if (d.fecha) {
-      const parts = d.fecha.split("-");
+    if (d.fecha_registro) {
+      const parts = d.fecha_registro.split("-");
       if (parts.length >= 2) {
         const key = `${parts[0]}-${parts[1]}`;
         monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);
@@ -449,218 +763,162 @@ function generateStatisticalReport(data) {
     ageStats,
     ageGroups,
     genderDistribution,
+    nationalityDistribution,
     topProfessions,
-    topLocations,
+    topDisappearanceLocations,
+    topConfinementLocations,
     monthlyTrend
   };
-  const conclusions = generateConclusions(partialReport);
+  const conclusions = generateConclusions(partialReport, data);
   return {
     ...partialReport,
     conclusions
   };
 }
 
-function generateTextReport(report) {
-  const lines = [];
-  const divider = "═".repeat(70);
-  const subDivider = "─".repeat(50);
-  lines.push(divider);
-  lines.push("           INFORME ESTADÍSTICO - NO MÁS SECUESTROS");
-  lines.push(`                    Generado: ${formatDate$1(report.generatedAt)}`);
-  lines.push(divider);
-  lines.push("");
-  lines.push("1. RESUMEN GENERAL");
-  lines.push("   " + subDivider);
-  lines.push(`   • Total de casos registrados: ${report.totalCases.toLocaleString()}`);
-  lines.push(`   • Casos con datos completos: ${report.casesWithCompleteData.toLocaleString()} (${(report.casesWithCompleteData / report.totalCases * 100).toFixed(1)}%)`);
-  lines.push(`   • Casos con fotografía: ${report.casesWithPhoto.toLocaleString()} (${(report.casesWithPhoto / report.totalCases * 100).toFixed(1)}%)`);
-  if (report.periodStart && report.periodEnd) {
-    lines.push(`   • Período analizado: ${report.periodStart} al ${report.periodEnd}`);
-  }
-  lines.push("");
-  lines.push("2. ANÁLISIS DEMOGRÁFICO - EDAD");
-  lines.push("   " + subDivider);
-  if (report.ageStats) {
-    lines.push(`   • Media aritmética: ${report.ageStats.mean.toFixed(1)} años`);
-    lines.push(`   • Mediana: ${report.ageStats.median.toFixed(1)} años`);
-    lines.push(`   • Moda: ${report.ageStats.mode ?? "N/A"} años`);
-    lines.push(`   • Desviación estándar: ±${report.ageStats.stdDev.toFixed(2)} años`);
-    lines.push(`   • Rango: ${report.ageStats.min} - ${report.ageStats.max} años`);
-    lines.push(`   • Coeficiente de variación: ${report.ageStats.cv.toFixed(2)}%`);
-  } else {
-    lines.push("   • Datos de edad insuficientes para análisis");
-  }
-  lines.push("");
-  lines.push("   Distribución por grupos de edad:");
-  lines.push("   ┌──────────────────────────┬──────────┬──────────┐");
-  lines.push("   │ Grupo                    │ Casos    │ %        │");
-  lines.push("   ├──────────────────────────┼──────────┼──────────┤");
-  for (const group of report.ageGroups) {
-    const label = group.label.padEnd(24);
-    const count = group.count.toString().padStart(8);
-    const pct = group.percentage.toFixed(1).padStart(7) + "%";
-    lines.push(`   │ ${label} │ ${count} │ ${pct} │`);
-  }
-  lines.push("   └──────────────────────────┴──────────┴──────────┘");
-  lines.push("");
-  lines.push("3. ANÁLISIS POR GÉNERO");
-  lines.push("   " + subDivider);
-  lines.push("   ┌──────────────────────────┬──────────┬──────────┐");
-  lines.push("   │ Género                   │ Casos    │ %        │");
-  lines.push("   ├──────────────────────────┼──────────┼──────────┤");
-  const genders = [
-    { label: "Masculino", count: report.genderDistribution.masculino },
-    { label: "Femenino", count: report.genderDistribution.femenino },
-    { label: "No especificado", count: report.genderDistribution.noEspecificado }
-  ];
-  for (const g of genders) {
-    const label = g.label.padEnd(24);
-    const count = g.count.toString().padStart(8);
-    const pct = (g.count / report.genderDistribution.total * 100).toFixed(1).padStart(7) + "%";
-    lines.push(`   │ ${label} │ ${count} │ ${pct} │`);
-  }
-  lines.push("   └──────────────────────────┴──────────┴──────────┘");
-  lines.push("");
-  lines.push("4. TOP 10 PROFESIONES MÁS AFECTADAS");
-  lines.push("   " + subDivider);
-  lines.push("   ┌────┬──────────────────────────────┬──────────┬──────────┐");
-  lines.push("   │ #  │ Profesión                    │ Casos    │ %        │");
-  lines.push("   ├────┼──────────────────────────────┼──────────┼──────────┤");
-  report.topProfessions.forEach((prof, index) => {
-    const num = (index + 1).toString().padStart(2);
-    const label = prof.value.substring(0, 28).padEnd(28);
-    const count = prof.fi.toString().padStart(8);
-    const pct = prof.pi.toFixed(1).padStart(7) + "%";
-    lines.push(`   │ ${num} │ ${label} │ ${count} │ ${pct} │`);
-  });
-  lines.push("   └────┴──────────────────────────────┴──────────┴──────────┘");
-  lines.push("");
-  lines.push("5. DISTRIBUCIÓN GEOGRÁFICA (Top 10)");
-  lines.push("   " + subDivider);
-  lines.push("   ┌────┬──────────────────────────────┬──────────┬──────────┐");
-  lines.push("   │ #  │ Ubicación                    │ Casos    │ %        │");
-  lines.push("   ├────┼──────────────────────────────┼──────────┼──────────┤");
-  report.topLocations.forEach((loc, index) => {
-    const num = (index + 1).toString().padStart(2);
-    const label = loc.value.substring(0, 28).padEnd(28);
-    const count = loc.fi.toString().padStart(8);
-    const pct = loc.pi.toFixed(1).padStart(7) + "%";
-    lines.push(`   │ ${num} │ ${label} │ ${count} │ ${pct} │`);
-  });
-  lines.push("   └────┴──────────────────────────────┴──────────┴──────────┘");
-  lines.push("");
-  if (report.monthlyTrend.length > 0) {
-    lines.push("6. TENDENCIA TEMPORAL (Últimos 12 meses)");
-    lines.push("   " + subDivider);
-    lines.push("   ┌──────────────┬──────────┐");
-    lines.push("   │ Mes          │ Casos    │");
-    lines.push("   ├──────────────┼──────────┤");
-    for (const m of report.monthlyTrend) {
-      const month = m.month.padEnd(12);
-      const count = m.count.toString().padStart(8);
-      lines.push(`   │ ${month} │ ${count} │`);
+const DEFAULT_THEME = {
+  primary: [30, 58, 95],
+  // Institutional Blue #1e3a5f
+  accent: [190, 18, 60],
+  // Red for critical items #be123c
+  grid: [200, 200, 200],
+  // Light gray
+  text: [0, 0, 0]};
+const setFillColor = (doc, color) => {
+  doc.setFillColor(color[0], color[1], color[2]);
+};
+const setDrawColor = (doc, color) => {
+  doc.setDrawColor(color[0], color[1], color[2]);
+};
+const setTextColor = (doc, color) => {
+  doc.setTextColor(color[0], color[1], color[2]);
+};
+function sanitizeChartText(text) {
+  return text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, "").replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s\.,:;()!?"'\/\-\+\=%]/g, "").trim();
+}
+function drawHorizontalBarChart(doc, data, dims, title) {
+  const { x, y, width, height } = dims;
+  const chartBottom = y + height;
+  const labelWidth = 50;
+  const valueWidth = 15;
+  const chartAreaWidth = width - labelWidth - valueWidth;
+  const barHeight = 6;
+  const gap = 4;
+  const maxValue = Math.max(...data.map((d) => d.value)) || 1;
+  setDrawColor(doc, DEFAULT_THEME.grid);
+  doc.line(x + labelWidth, y, x + labelWidth, chartBottom);
+  let currentY = y + 2;
+  data.forEach((item) => {
+    doc.setFontSize(9);
+    doc.setFont("times", "normal");
+    setTextColor(doc, DEFAULT_THEME.text);
+    let label = sanitizeChartText(item.label);
+    const maxLabelW = labelWidth - 3;
+    if (doc.getTextWidth(label) > maxLabelW) {
+      let truncated = label;
+      while (doc.getTextWidth(truncated + "...") > maxLabelW && truncated.length > 0) {
+        truncated = truncated.slice(0, -1);
+      }
+      label = truncated + "...";
     }
-    lines.push("   └──────────────┴──────────┘");
-    lines.push("");
-  }
-  lines.push("7. CONCLUSIONES Y OBSERVACIONES");
-  lines.push("   " + subDivider);
-  report.conclusions.forEach((conclusion, index) => {
-    lines.push(`   ${index + 1}. ${conclusion}`);
-    lines.push("");
+    doc.text(label, x + labelWidth - 2, currentY + barHeight - 1.5, { align: "right" });
+    const barWidth = item.value / maxValue * chartAreaWidth;
+    const color = item.isHighlight ? DEFAULT_THEME.accent : DEFAULT_THEME.primary;
+    setFillColor(doc, color);
+    doc.rect(x + labelWidth, currentY, barWidth, barHeight, "F");
+    doc.setFontSize(8);
+    setTextColor(doc, DEFAULT_THEME.text);
+    const valText = `${item.value} (${item.percentage.toFixed(1)}%)`;
+    doc.text(valText, x + labelWidth + barWidth + 2, currentY + barHeight - 1);
+    currentY += barHeight + gap;
   });
-  lines.push(divider);
-  lines.push("   Este informe fue generado automáticamente por el sistema");
-  lines.push("   NoMásSecuestros. Los datos presentados son de carácter");
-  lines.push("   informativo y deben ser verificados con fuentes oficiales.");
-  lines.push(divider);
-  return lines.join("\n");
+  return currentY;
 }
-function generateCSVReport(report) {
-  const lines = [];
-  lines.push("RESUMEN GENERAL");
-  lines.push("Métrica,Valor,Porcentaje");
-  lines.push(`Total de casos,${report.totalCases},100%`);
-  lines.push(`Casos con fotografía,${report.casesWithPhoto},${(report.casesWithPhoto / report.totalCases * 100).toFixed(1)}%`);
-  lines.push(`Casos con datos completos,${report.casesWithCompleteData},${(report.casesWithCompleteData / report.totalCases * 100).toFixed(1)}%`);
-  lines.push("");
-  if (report.ageStats) {
-    lines.push("ESTADÍSTICAS DE EDAD");
-    lines.push("Medida,Valor");
-    lines.push(`Media,${report.ageStats.mean.toFixed(2)}`);
-    lines.push(`Mediana,${report.ageStats.median.toFixed(2)}`);
-    lines.push(`Moda,${report.ageStats.mode ?? "N/A"}`);
-    lines.push(`Desviación Estándar,${report.ageStats.stdDev.toFixed(2)}`);
-    lines.push(`Varianza,${report.ageStats.variance.toFixed(2)}`);
-    lines.push(`Rango,${report.ageStats.range}`);
-    lines.push(`CV,${report.ageStats.cv.toFixed(2)}%`);
-    lines.push("");
+function drawLineChart(doc, data, dims) {
+  const { x, y, width, height } = dims;
+  const chartBottom = y + height;
+  const padding = { left: 10, bottom: 10, top: 5, right: 5 };
+  const plotX = x + padding.left;
+  const plotY = y + padding.top;
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.bottom - padding.top;
+  const maxValue = Math.max(...data.map((d) => d.value)) * 1.1;
+  const stepX = plotWidth / (data.length - 1 || 1);
+  setDrawColor(doc, DEFAULT_THEME.text);
+  doc.setLineWidth(0.3);
+  doc.line(plotX, plotY, plotX, plotY + plotHeight);
+  doc.line(plotX, plotY + plotHeight, plotX + plotWidth, plotY + plotHeight);
+  const gridSteps = 4;
+  setDrawColor(doc, DEFAULT_THEME.grid);
+  doc.setLineWidth(0.1);
+  doc.setFontSize(7);
+  setTextColor(doc, DEFAULT_THEME.text);
+  for (let i = 0; i <= gridSteps; i++) {
+    const val = maxValue / gridSteps * i;
+    const lineY = plotY + plotHeight - val / maxValue * plotHeight;
+    doc.line(plotX, lineY, plotX + plotWidth, lineY);
+    doc.text(Math.round(val).toString(), plotX - 2, lineY + 1, { align: "right" });
   }
-  lines.push("DISTRIBUCIÓN POR EDAD");
-  lines.push("Grupo,Casos,Porcentaje");
-  for (const group of report.ageGroups) {
-    lines.push(`${group.label},${group.count},${group.percentage.toFixed(1)}%`);
+  const points = data.map((d, i) => {
+    const px = plotX + i * stepX;
+    const py = plotY + plotHeight - d.value / maxValue * plotHeight;
+    return [px, py];
+  });
+  setDrawColor(doc, DEFAULT_THEME.primary);
+  doc.setLineWidth(0.5);
+  for (let i = 0; i < points.length - 1; i++) {
+    doc.line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
   }
-  lines.push("");
-  lines.push("DISTRIBUCIÓN POR GÉNERO");
-  lines.push("Género,Casos,Porcentaje");
-  lines.push(`Masculino,${report.genderDistribution.masculino},${(report.genderDistribution.masculino / report.totalCases * 100).toFixed(1)}%`);
-  lines.push(`Femenino,${report.genderDistribution.femenino},${(report.genderDistribution.femenino / report.totalCases * 100).toFixed(1)}%`);
-  lines.push(`No especificado,${report.genderDistribution.noEspecificado},${(report.genderDistribution.noEspecificado / report.totalCases * 100).toFixed(1)}%`);
-  lines.push("");
-  lines.push("TOP PROFESIONES");
-  lines.push("Profesión,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada");
-  for (const prof of report.topProfessions) {
-    lines.push(`"${prof.value}",${prof.fi},${prof.hi.toFixed(4)},${prof.pi.toFixed(2)}%,${prof.Fi}`);
-  }
-  lines.push("");
-  lines.push("TOP UBICACIONES");
-  lines.push("Ubicación,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada");
-  for (const loc of report.topLocations) {
-    lines.push(`"${loc.value}",${loc.fi},${loc.hi.toFixed(4)},${loc.pi.toFixed(2)}%,${loc.Fi}`);
-  }
-  lines.push("");
-  lines.push("TENDENCIA MENSUAL");
-  lines.push("Mes,Casos");
-  for (const m of report.monthlyTrend) {
-    lines.push(`${m.month},${m.count}`);
-  }
-  return lines.join("\n");
-}
-function formatDate$1(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleDateString("es-VE", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+  setFillColor(doc, DEFAULT_THEME.primary);
+  points.forEach((p, i) => {
+    doc.circle(p[0], p[1], 1, "F");
+    if (i === 0 || i === data.length - 1 || i % 3 === 0) {
+      const safeLabel = sanitizeChartText(data[i].label);
+      doc.text(safeLabel, p[0], chartBottom + 4, { align: "center", angle: 0 });
+    }
   });
 }
-function downloadReport(content, filename, type) {
-  const mimeType = type === "csv" ? "text/csv;charset=utf-8;" : "text/plain;charset=utf-8;";
-  const blob = new Blob(["\uFEFF" + content], { type: mimeType });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", filename);
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+function drawPartToWholeChart(doc, data, dims) {
+  const { x, y, width} = dims;
+  const total = data.reduce((s, i) => s + i.value, 0);
+  let currentX = x;
+  const barH = 15;
+  data.forEach((item, i) => {
+    const segWidth = item.value / total * width;
+    const color = item.color || DEFAULT_THEME.primary;
+    setFillColor(doc, color);
+    doc.rect(currentX, y, segWidth, barH, "F");
+    currentX += segWidth;
+  });
+  let legendY = y + barH + 5;
+  const legendXStart = x;
+  let currentLegendX = legendXStart;
+  data.forEach((item, i) => {
+    const color = item.color || DEFAULT_THEME.primary;
+    const percent = (item.value / total * 100).toFixed(1) + "%";
+    const labelText = `${sanitizeChartText(item.label)} (${percent})`;
+    setFillColor(doc, color);
+    doc.rect(currentLegendX, legendY, 3, 3, "F");
+    doc.setFontSize(8);
+    setTextColor(doc, DEFAULT_THEME.text);
+    doc.text(labelText, currentLegendX + 4, legendY + 2.5);
+    const textW = doc.getTextWidth(labelText);
+    currentLegendX += textW + 10;
+    if (currentLegendX > x + width) {
+      currentLegendX = legendXStart;
+      legendY += 4;
+    }
+  });
 }
 
 const COLORS = {
   primary: [21, 101, 192],
+  // Venezuelan blue
+  secondary: [66, 66, 66],
   // Dark gray
   text: [0, 0, 0],
-  // Gray
-  tableHeader: [227, 242, 253],
-  // Light gray
-  alert: [198, 40, 40]
-  // Red
-};
+  // Black
+  border: [189, 189, 189]};
 const MARGINS = {
   top: 25.4,
   right: 25.4,
@@ -668,196 +926,267 @@ const MARGINS = {
   left: 25.4
 };
 const FONTS = {
-  title: 16,
-  heading1: 14,
+  title: 12,
+  // APA Title is 12pt bold
+  heading1: 12,
+  // APA L1 is 12pt bold centered
   heading2: 12,
-  body: 11,
-  small: 10,
-  tiny: 9};
+  // APA L2 is 12pt bold left
+  body: 12,
+  // APA Body is 12pt
+  small: 11,
+  // Tables can be slightly smaller but strictly 12pt is preferred.
+  tiny: 10};
 const APA_TABLE_STYLE = {
   theme: "plain",
   styles: {
-    fontSize: FONTS.small,
-    cellPadding: 2,
-    font: "helvetica",
-    textColor: COLORS.text
+    fontSize: 10,
+    cellPadding: 3,
+    font: "times",
+    // Strict APA
+    textColor: COLORS.text,
+    valign: "middle",
+    halign: "left"
+    // Default left alignment
   },
   headStyles: {
     fontStyle: "bold",
     fillColor: [255, 255, 255],
     textColor: COLORS.text,
-    lineWidth: { bottom: 0.2 },
+    lineWidth: { bottom: 0.5, top: 0.5 },
     lineColor: [0, 0, 0]
   },
+  bodyStyles: {
+    lineWidth: { bottom: 0 }
+  },
+  footStyles: {
+    lineWidth: { top: 0.5 }
+    // Bottom of table
+  },
   tableLineColor: [0, 0, 0],
-  tableLineWidth: { top: 0.2, bottom: 0.2 }
+  tableLineWidth: 0,
+  columnStyles: {
+    0: { cellWidth: "auto" }
+  }
 };
-function generateProfessionalPDF(report) {
+function generateProfessionalPDF(report, t) {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "letter"
   });
   let currentY = MARGINS.top;
-  currentY = addCoverPage(doc, report);
+  addCoverPage(doc, report, t);
   doc.addPage();
   currentY = MARGINS.top;
-  currentY = addExecutiveSummary(doc, report, currentY);
-  currentY = addIntroduction(doc, report, currentY);
-  currentY = addJurisdictionalNote(doc, currentY);
-  currentY = addDemographicAnalysis(doc, report, currentY);
-  currentY = addGenderAnalysis(doc, report, currentY);
-  currentY = addOccupationalAnalysis(doc, report, currentY);
-  currentY = addGeographicAnalysis(doc, report, currentY);
+  currentY = addExecutiveSummary(doc, report, currentY, t);
+  currentY = checkPageBreak(doc, currentY, 50);
+  currentY = addIntroduction(doc, report, currentY, t);
+  currentY = addJurisdictionalNote(doc, currentY, t);
+  if (report.ageStats || report.genderDistribution) {
+    currentY = checkPageBreak(doc, currentY, 50);
+    currentY = addDemographicsAnalysis(doc, report, currentY, t);
+    currentY = checkPageBreak(doc, currentY, 50);
+    currentY = addGenderAnalysis(doc, report, currentY, t);
+  }
+  currentY = checkPageBreak(doc, currentY, 50);
+  currentY = addNationalityAnalysis(doc, report, currentY, t);
+  currentY = checkPageBreak(doc, currentY, 50);
+  currentY = addOccupationalAnalysis(doc, report, currentY, t);
+  if (report.topDisappearanceLocations.length > 0) {
+    currentY = checkPageBreak(doc, currentY, 50);
+    currentY = addGeographicDistribution(doc, report, currentY, t);
+  }
   if (report.monthlyTrend.length > 0) {
-    currentY = addTemporalAnalysis(doc, report, currentY);
+    currentY = checkPageBreak(doc, currentY, 50);
+    currentY = addTemporalAnalysis(doc, report, currentY, t);
   }
-  currentY = addConclusions(doc, report, currentY);
-  addPageNumbers(doc);
-  const filename = `Informe_Estadistico_${formatDateForFilename(report.generatedAt)}.pdf`;
-  doc.save(filename);
+  currentY = checkPageBreak(doc, currentY, 50);
+  currentY = addConclusions(doc, report, currentY, t);
+  addDisclaimer(doc, t);
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 2; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(FONTS.small);
+    doc.setFont("times", "normal");
+    doc.setTextColor(...COLORS.text);
+    doc.text("INFORME ESTADÍSTICO", MARGINS.left, MARGINS.top - 10);
+    doc.text(`${i} / ${pageCount}`, 195, 270, { align: "right" });
+  }
+  doc.save(`Reporte_DataTracker_${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.pdf`);
 }
-function addCoverPage(doc, report) {
-  const pageWidth = doc.internal.pageSize.getWidth();
+function addCoverPage(doc, report, t) {
   const pageHeight = doc.internal.pageSize.getHeight();
-  let y = pageHeight / 3;
-  doc.setFontSize(FONTS.title + 4);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLORS.primary);
-  const title = "INFORME ESTADÍSTICO";
-  const titleWidth = doc.getTextWidth(title);
-  doc.text(title, (pageWidth - titleWidth) / 2, y);
-  y += 15;
-  doc.setFontSize(FONTS.heading1);
-  const subtitle = "Análisis de Presos Políticos en Venezuela";
-  const subtitleWidth = doc.getTextWidth(subtitle);
-  doc.text(subtitle, (pageWidth - subtitleWidth) / 2, y);
-  y += 20;
-  doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "normal");
+  doc.setFillColor(...COLORS.primary);
+  doc.rect(0, 0, 15, pageHeight, "F");
+  let y = 80;
+  doc.setFontSize(24);
+  doc.setFont("times", "bold");
   doc.setTextColor(...COLORS.text);
-  if (report.periodStart && report.periodEnd) {
-    const period = `Período: ${report.periodStart} - ${report.periodEnd}`;
-    const periodWidth = doc.getTextWidth(period);
-    doc.text(period, (pageWidth - periodWidth) / 2, y);
-    y += 10;
-  }
-  const genDate = `Fecha de generación: ${formatDate(report.generatedAt)}`;
-  const genDateWidth = doc.getTextWidth(genDate);
-  doc.text(genDate, (pageWidth - genDateWidth) / 2, y);
-  y += 30;
-  doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "italic");
-  const org = "Sistema Automatizado de Análisis Estadístico";
-  const orgWidth = doc.getTextWidth(org);
-  doc.text(org, (pageWidth - orgWidth) / 2, y);
-  y += 5;
-  const project = "NO MÁS SECUESTROS";
-  const projectWidth = doc.getTextWidth(project);
-  doc.text(project, (pageWidth - projectWidth) / 2, y);
-  return y;
+  doc.text(t("Report-Header-Main"), 30, y);
+  y += 15;
+  doc.setFontSize(16);
+  doc.setTextColor(...COLORS.secondary);
+  doc.text(t("Report-Header-Sub"), 30, y);
+  y += 100;
+  doc.setFontSize(12);
+  doc.setTextColor(...COLORS.text);
+  const dateStr = (/* @__PURE__ */ new Date()).toLocaleDateString();
+  doc.text(`${t("Report-Header-GenDate")} ${dateStr}`, 30, y);
+  y += 20;
+  doc.setDrawColor(...COLORS.border);
+  doc.line(30, y, 180, y);
+  y += 10;
+  doc.setFontSize(10);
+  doc.setFont("times", "italic");
+  const disclaimerParts = doc.splitTextToSize(t("Report-Disclaimer-Text"), 150);
+  doc.text(disclaimerParts, 30, y);
+  return pageHeight;
 }
-function addExecutiveSummary(doc, report, startY) {
+function addExecutiveSummary(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "RESUMEN EJECUTIVO", y);
-  const summary = generateExecutiveSummaryText(report);
+  y = addSectionTitle(doc, t("Report-Section-Summary"), y);
+  const summary = generateExecutiveSummaryText(report, t).trim();
   doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   doc.setTextColor(...COLORS.text);
   const lines = doc.splitTextToSize(summary, doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right);
   for (const line of lines) {
     y = checkPageBreak(doc, y, 10);
-    doc.text(line, MARGINS.left, y);
-    y += 6;
+    doc.text(line, MARGINS.left, y, { align: "left" });
+    y += 10;
   }
-  y += 10;
+  const kwLabel = t("Report-Keywords-Label") + " ";
+  const kwContent = t("Report-Keywords-Content");
+  const kwFull = kwLabel + kwContent;
+  y = checkPageBreak(doc, y, 20);
+  const kwWords = kwFull.split(" ");
+  let kwLine = "";
+  const kwIndent = 12.7;
+  const kwMaxW = doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right - kwIndent;
+  kwWords.forEach((word, idx) => {
+    const test = kwLine ? kwLine + " " + word : word;
+    doc.setFont("times", "normal");
+    if (doc.getTextWidth(test) > kwMaxW) {
+      renderKwLine(doc, kwLine, MARGINS.left + kwIndent, y, kwLabel);
+      y += 10;
+      kwLine = word;
+    } else {
+      kwLine = test;
+    }
+    if (idx === kwWords.length - 1) {
+      renderKwLine(doc, kwLine, MARGINS.left + kwIndent, y, kwLabel);
+      y += 10;
+    }
+  });
   return y;
 }
-function generateExecutiveSummaryText(report) {
+function renderKwLine(doc, text, x, y, label) {
+  if (text.startsWith(label)) {
+    doc.setFont("times", "italic");
+    doc.text(label, x, y);
+    const lw = doc.getTextWidth(label);
+    doc.setFont("times", "normal");
+    doc.text(text.substring(label.length), x + lw, y);
+  } else {
+    doc.setFont("times", "normal");
+    doc.text(text, x, y);
+  }
+}
+function generateExecutiveSummaryText(report, t) {
   const totalCases = report.totalCases.toLocaleString();
   const avgAge = report.ageStats?.mean.toFixed(1) || "N/A";
   const malePercent = (report.genderDistribution.masculino / report.totalCases * 100).toFixed(1);
   const topProfession = report.topProfessions[0]?.value || "N/A";
-  const topLocation = report.topLocations[0]?.value || "N/A";
-  return sanitizeText(`El presente informe analiza ${totalCases} casos registrados de presos políticos en Venezuela. Los datos revelan que la edad promedio de las personas afectadas es de ${avgAge} años, con una distribución de género donde el ${malePercent}% son hombres. El análisis ocupacional muestra que "${topProfession}" es la profesión más afectada, mientras que "${topLocation}" representa la ubicación geográfica con mayor concentración de casos. Este informe presenta un análisis estadístico detallado que evidencia patrones sistemáticos de persecución política y violaciones a los derechos humanos en el país.`);
+  const topLocation = report.topDisappearanceLocations[0]?.value || "N/A";
+  return sanitizeText(t("Report-Summary-Text", {
+    total: totalCases,
+    period: report.periodStart && report.periodEnd ? ` (${formatDate(report.periodStart)} - ${formatDate(report.periodEnd)})` : "",
+    avgAge,
+    topGender: report.genderDistribution.masculino > report.genderDistribution.femenino ? t("Stats-Label-Men") : t("Stats-Label-Women"),
+    // Simple heuristic
+    genderPct: malePercent,
+    topProf: topProfession,
+    profPct: report.topProfessions[0]?.pi.toFixed(1) || "0",
+    topLoc: topLocation
+  }));
 }
-function addIntroduction(doc, report, startY) {
+function addIntroduction(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Introducción", y);
-  const intro = `El presente análisis estadístico se inscribe en el marco de la documentación sistemática de situaciones de detención arbitraria con fines políticos en la República Bolivariana de Venezuela. El objetivo primordial de este documento es proporcionar un sustrato cuantitativo que coadyuve a la identificación de patrones de persecución sistemática, en concordancia con los estándares internacionales de derechos humanos.
-
-Metodología y Transparencia Técnica: La presente base de datos se construye mediante la técnica de monitoreo ciudadano y agregación de fuentes abiertas (Open Source Intelligence - OSINT). La información ha sido sistematizada a partir del cruce de reportes de organizaciones no gubernamentales reconocidas (como Foro Penal), denuncias públicas en plataformas digitales y reportes directos verificados de la comunidad. Este mecanismo busca vencer la opacidad institucional, sirviendo como un registro sombra o "shadow report" que alerta sobre tendencias y patrones de vulneración, aunque su naturaleza es de alerta temprana y no sustituye el expediente judicial individual.
-
-Alcance y Sustento Jurídico: Este informe abarca un universo de ${report.totalCases.toLocaleString()} casos registrados` + (report.periodStart && report.periodEnd ? ` durante el período comprendido entre ${report.periodStart} y ${report.periodEnd}` : "") + `. Las conductas aquí descritas podrían subsumirse en los supuestos previstos en el Artículo 7 del Estatuto de Roma de la Corte Penal Internacional (Corte Penal Internacional [CPI], 1998), particularmente en lo relativo al encarcelamiento u otra privación grave de la libertad física en violación de normas fundamentales de derecho internacional.`;
+  const title = t("Report-Intro-Title");
+  y = checkPageBreak(doc, y, 20);
+  doc.setFontSize(FONTS.title);
+  doc.setFont("times", "bold");
+  doc.setTextColor(...COLORS.text);
+  const textWidth = doc.getTextWidth(title);
+  doc.text(title, (doc.internal.pageSize.getWidth() - textWidth) / 2, y);
+  y += 12;
+  const intro = t("Report-Intro-Text", {
+    cases: report.totalCases.toLocaleString(),
+    period: report.periodStart && report.periodEnd ? ` (${formatDate(report.periodStart)} - ${formatDate(report.periodEnd)})` : ""
+  });
   doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...COLORS.text);
-  const lines = doc.splitTextToSize(intro, doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right);
-  for (const line of lines) {
-    y = checkPageBreak(doc, y, 10);
-    doc.text(line, MARGINS.left, y);
-    y += 6;
-  }
-  y += 10;
+  doc.setFont("times", "normal");
+  const paragraphs = intro.split("\n\n");
+  paragraphs.forEach((p) => {
+    y = printAPAParagraph(doc, p, y);
+  });
   return y;
 }
-function addJurisdictionalNote(doc, startY) {
+function addJurisdictionalNote(doc, startY, t) {
   let y = startY;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const boxWidth = pageWidth - MARGINS.left - MARGINS.right;
+  doc.internal.pageSize.getWidth();
   y = checkPageBreak(doc, y, 50);
-  doc.setFont("helvetica", "bold");
+  y = checkPageBreak(doc, y, 50);
+  doc.setFont("times", "bold");
   doc.setFontSize(FONTS.small);
-  doc.setTextColor(...COLORS.alert);
-  doc.text("NOTA SOBRE ESTATUS JURISDICCIONAL (Actualización Enero 2026):", MARGINS.left, y);
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...COLORS.text);
-  const noteText = `Se hace constar que la reciente sanción legislativa (Diciembre 2025) orientada a derogar el Estatuto de Roma por parte de la Asamblea Nacional no afecta la competencia material de la Corte Penal Internacional sobre los hechos aquí documentados (2018-2024). De conformidad con el Artículo 127.2 del Estatuto, la retirada no exime al Estado de las obligaciones surgidas durante su permanencia. Por el contrario, esta maniobra legislativa se interpreta en este informe como un elemento agravante que evidencia la "falta de disposición" (unwillingness) genuina del Estado para administrar justicia doméstica, reforzando la admisibilidad del caso ante la jurisdicción internacional.`;
-  const lines = doc.splitTextToSize(noteText, boxWidth);
-  for (const line of lines) {
-    y = checkPageBreak(doc, y, 7);
-    doc.text(line, MARGINS.left, y);
-    y += 5;
-  }
+  doc.setTextColor(0, 0, 0);
+  doc.text(t("Report-Jurisdiction-Title"), MARGINS.left, y);
   y += 10;
+  doc.setFont("times", "normal");
+  const noteText = t("Report-Jurisdiction-Text");
+  y = printAPAParagraph(doc, noteText, y);
   return y;
 }
-function addDemographicAnalysis(doc, report, startY) {
+function addDemographicsAnalysis(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Análisis Demográfico", y);
-  y = addSubsectionTitle(doc, "Estadísticas Descriptivas de la Variable Edad", y);
+  y = addSectionTitle(doc, t("Report-Section-Demographics"), y);
+  y = checkPageBreak(doc, y, 75);
+  y = addSubsectionTitle(doc, t("Report-Sub-Age"), y);
   if (report.ageStats) {
-    y = checkPageBreak(doc, y, 60);
     doc.setFontSize(FONTS.small);
-    doc.setFont("helvetica", "italic");
-    doc.text("Tabla 1. Medidas de tendencia central y dispersión de la edad", MARGINS.left, y - 2);
+    doc.setFont("times", "bold");
+    doc.text("Tabla 1", MARGINS.left, y - 6);
+    doc.setFont("times", "italic");
+    doc.text(t("Report-Table-Age-Title"), MARGINS.left, y - 2);
     autoTable(doc, {
       ...APA_TABLE_STYLE,
       startY: y,
-      head: [["Medida Estadística", "Valor"]],
+      head: [[t("Report-Table-Metric"), t("Report-Table-Value")]],
       body: [
-        ["Media aritmética", `${report.ageStats.mean.toFixed(2)} años`],
-        ["Mediana", `${report.ageStats.median.toFixed(2)} años`],
-        ["Moda", `${report.ageStats.mode ?? "N/A"} años`],
-        ["Desviación estándar", `±${report.ageStats.stdDev.toFixed(2)} años`],
+        [t("Report-Metric-Mean"), `${report.ageStats.mean.toFixed(2)} ${t("Stats-Info-Yo") || "años"}`],
+        [t("Report-Metric-Median"), `${report.ageStats.median.toFixed(2)} ${t("Stats-Info-Yo") || "años"}`],
+        ["Moda", `${report.ageStats.mode ?? "N/A"} ${t("Stats-Info-Yo") || "años"}`],
+        [t("Report-Metric-StdDev"), `±${report.ageStats.stdDev.toFixed(2)}`],
         ["Varianza", `${report.ageStats.variance.toFixed(2)}`],
-        ["Rango", `${report.ageStats.min} - ${report.ageStats.max} años`],
-        ["Coeficiente de variación", `${report.ageStats.cv.toFixed(2)}%`]
+        [t("Report-Metric-Range"), `${report.ageStats.min} - ${report.ageStats.max}`],
+        [t("Stats-Report-AgeCV"), `${report.ageStats.cv.toFixed(2)}%`]
       ],
       margin: { left: MARGINS.left, right: MARGINS.right }
     });
     y = doc.lastAutoTable.finalY + 10;
   }
-  y = addSubsectionTitle(doc, "Distribución por Intervalos de Edad", y);
+  y = addSubsectionTitle(doc, t("Report-Sub-Age") + " (Detalle)", y);
   y = checkPageBreak(doc, y, 60);
   doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  doc.text("Tabla 2. Frecuencias por grupos de edad", MARGINS.left, y - 2);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 2", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Age-Title") + " - Grupos", MARGINS.left, y - 2);
   autoTable(doc, {
     ...APA_TABLE_STYLE,
     startY: y,
-    head: [["Grupo de Edad", "Frecuencia Absoluta", "Porcentaje"]],
+    head: [[t("Report-Table-Metric"), t("Report-Col-FreqAbs"), t("Report-Col-Percent")]],
     body: report.ageGroups.map((group) => [
       group.label,
       group.count.toString(),
@@ -872,22 +1201,25 @@ function addDemographicAnalysis(doc, report, startY) {
   y = doc.lastAutoTable.finalY + 15;
   return y;
 }
-function addGenderAnalysis(doc, report, startY) {
+function addGenderAnalysis(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Análisis por Género", y);
-  y = checkPageBreak(doc, y, 50);
-  doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  doc.text("Tabla 3. Distribución de casos según género", MARGINS.left, y - 2);
+  y = checkPageBreak(doc, y, 70);
+  y = addSubsectionTitle(doc, t("Report-Sub-Gender"), y);
   const genderData = [
-    ["Masculino", report.genderDistribution.masculino, (report.genderDistribution.masculino / report.totalCases * 100).toFixed(1)],
-    ["Femenino", report.genderDistribution.femenino, (report.genderDistribution.femenino / report.totalCases * 100).toFixed(1)],
-    ["No especificado", report.genderDistribution.noEspecificado, (report.genderDistribution.noEspecificado / report.totalCases * 100).toFixed(1)]
+    [t("Stats-Label-Men"), report.genderDistribution.masculino, (report.genderDistribution.masculino / report.totalCases * 100).toFixed(1)],
+    [t("Stats-Label-Women"), report.genderDistribution.femenino, (report.genderDistribution.femenino / report.totalCases * 100).toFixed(1)],
+    [t("Stats-Label-NotSpecified"), report.genderDistribution.noEspecificado, (report.genderDistribution.noEspecificado / report.totalCases * 100).toFixed(1)]
   ];
+  y = checkPageBreak(doc, y, 60);
+  doc.setFontSize(FONTS.small);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 3", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Gender-Title"), MARGINS.left, y - 2);
   autoTable(doc, {
     ...APA_TABLE_STYLE,
     startY: y,
-    head: [["Género", "Frecuencia Absoluta", "Porcentaje"]],
+    head: [[t("Report-Col-Gender"), t("Report-Col-FreqAbs"), t("Report-Col-Percent")]],
     body: genderData.map((row) => [row[0], row[1].toString(), `${row[2]}%`]),
     columnStyles: {
       1: { halign: "right" },
@@ -896,20 +1228,115 @@ function addGenderAnalysis(doc, report, startY) {
     margin: { left: MARGINS.left, right: MARGINS.right }
   });
   y = doc.lastAutoTable.finalY + 15;
+  y = checkPageBreak(doc, y, 70);
+  doc.setFont("times", "bold");
+  doc.setFontSize(FONTS.small);
+  doc.text("Figura 1", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Fig1-Title"), MARGINS.left, y - 1);
+  y += 4;
+  const chartWidth = 160;
+  const genderChartData = [
+    { label: t("Stats-Label-Men"), value: report.genderDistribution.masculino, color: [30, 58, 95] },
+    // Blue
+    { label: t("Stats-Label-Women"), value: report.genderDistribution.femenino, color: [190, 18, 60] },
+    // Red
+    { label: t("Stats-Label-NotSpecified"), value: report.genderDistribution.noEspecificado, color: [150, 150, 150] }
+    // Gray
+  ].filter((d) => d.value > 0);
+  drawPartToWholeChart(doc, genderChartData, {
+    x: MARGINS.left,
+    y,
+    width: chartWidth});
+  y += 35;
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  const genderNote = t("Report-Fig1-Note");
+  y = printAPAParagraph(doc, genderNote, y);
+  y += 15;
   return y;
 }
-function addOccupationalAnalysis(doc, report, startY) {
+function addNationalityAnalysis(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Análisis Ocupacional", y);
-  y = addSubsectionTitle(doc, "Principales Sectores Ocupacionales Afectados", y);
-  y = checkPageBreak(doc, y, 80);
+  if (checkPageBreak(doc, y, 120) !== y) {
+    y = MARGINS.top;
+  }
+  y = addSectionTitle(doc, t("Report-Section-Nationality"), y);
   doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  doc.text("Tabla 4. Distribución de frecuencias por ocupación", MARGINS.left, y - 2);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 4", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Nat-Title"), MARGINS.left, y - 2);
+  const nat = report.nationalityDistribution;
+  const tableData = [
+    [t("Stats-Label-Venezuelans"), nat.nacional.toString(), (nat.nacional / nat.total).toFixed(4), `${(nat.nacional / nat.total * 100).toFixed(1)}%`],
+    [t("Stats-Label-Foreigners"), nat.extranjera.toString(), (nat.extranjera / nat.total).toFixed(4), `${(nat.extranjera / nat.total * 100).toFixed(1)}%`],
+    [t("Stats-Label-NotSpecified"), nat.noEspecificada.toString(), (nat.noEspecificada / nat.total).toFixed(4), `${(nat.noEspecificada / nat.total * 100).toFixed(1)}%`]
+  ];
   autoTable(doc, {
     ...APA_TABLE_STYLE,
     startY: y,
-    head: [["#", "Profesión", "Frec. Absoluta", "Frec. Relativa", "Porcentaje"]],
+    head: [[t("Report-Col-Nationality"), { content: t("Report-Col-FreqAbs"), styles: { halign: "right" } }, { content: t("Report-Col-FreqRel"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
+    body: tableData,
+    headStyles: { ...APA_TABLE_STYLE.headStyles, fontSize: FONTS.tiny },
+    styles: { ...APA_TABLE_STYLE.styles, fontSize: FONTS.tiny },
+    columnStyles: {
+      1: { halign: "right" },
+      2: { halign: "right" },
+      3: { halign: "right" }
+    },
+    margin: { left: MARGINS.left, right: MARGINS.right }
+  });
+  y = doc.lastAutoTable.finalY + 10;
+  if (nat.extranjera > 0 && nat.topForeignNationalities.length > 0) {
+    y = checkPageBreak(doc, y, 50);
+    doc.setFontSize(FONTS.small);
+    doc.setFont("times", "bold");
+    doc.text("Tabla 4.1", MARGINS.left, y - 6);
+    doc.setFont("times", "italic");
+    doc.text(t("Report-Table-Nat-Title") + " (Detalle)", MARGINS.left, y - 2);
+    autoTable(doc, {
+      ...APA_TABLE_STYLE,
+      startY: y,
+      head: [["#", t("Report-Col-Nationality"), { content: t("Report-Col-FreqAbs"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
+      body: nat.topForeignNationalities.map((n, index) => [
+        (index + 1).toString(),
+        sanitizeText(n.value),
+        n.fi.toString(),
+        `${n.pi.toFixed(1)}%`
+      ]),
+      headStyles: { ...APA_TABLE_STYLE.headStyles, fontSize: FONTS.tiny },
+      styles: { ...APA_TABLE_STYLE.styles, fontSize: FONTS.tiny },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 10 },
+        2: { halign: "right" },
+        3: { halign: "right" }
+      },
+      margin: { left: MARGINS.left, right: MARGINS.right }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+    y = printAPAParagraph(doc, t("Report-Note-Vienna"), y);
+    y += 10;
+  }
+  return y;
+}
+function addOccupationalAnalysis(doc, report, startY, t) {
+  let y = startY;
+  if (checkPageBreak(doc, y, 130) !== y) {
+    y = MARGINS.top;
+  }
+  y = addSectionTitle(doc, t("Report-Section-Occupation"), y);
+  y = addSubsectionTitle(doc, t("Report-Sub-Professions"), y);
+  doc.setFontSize(FONTS.small);
+  doc.setFontSize(FONTS.small);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 5", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Occ-Title"), MARGINS.left, y - 2);
+  autoTable(doc, {
+    ...APA_TABLE_STYLE,
+    startY: y,
+    head: [["#", t("Report-Col-Occupation"), { content: t("Report-Col-FreqAbs"), styles: { halign: "right" } }, { content: t("Report-Col-FreqRel"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
     body: report.topProfessions.map((prof, index) => [
       (index + 1).toString(),
       sanitizeText(prof.value),
@@ -917,8 +1344,6 @@ function addOccupationalAnalysis(doc, report, startY) {
       prof.hi.toFixed(4),
       `${prof.pi.toFixed(1)}%`
     ]),
-    headStyles: { ...APA_TABLE_STYLE.headStyles, fontSize: FONTS.tiny },
-    styles: { ...APA_TABLE_STYLE.styles, fontSize: FONTS.tiny },
     columnStyles: {
       0: { halign: "center", cellWidth: 10 },
       2: { halign: "right" },
@@ -928,29 +1353,58 @@ function addOccupationalAnalysis(doc, report, startY) {
     margin: { left: MARGINS.left, right: MARGINS.right }
   });
   y = doc.lastAutoTable.finalY + 15;
+  y = checkPageBreak(doc, y, 90);
+  y += 5;
+  doc.setFont("times", "bold");
+  doc.setFontSize(FONTS.small);
+  doc.text("Figura 2", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Fig2-Title"), MARGINS.left, y - 1);
+  y += 4;
+  const occupationChartData = report.topProfessions.slice(0, 10).map((p) => ({
+    label: sanitizeText(p.value),
+    value: p.fi,
+    percentage: p.pi,
+    isHighlight: p.value.toLowerCase().includes("estudiante")
+  }));
+  y = drawHorizontalBarChart(doc, occupationChartData, {
+    x: MARGINS.left,
+    y: y + 5,
+    // Add more internal padding just in case
+    width: 170,
+    height: 60
+  });
+  y += 10;
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  const occNote = t("Report-Fig2-Note");
+  y = printAPAParagraph(doc, occNote, y);
+  y += 15;
   return y;
 }
-function addGeographicAnalysis(doc, report, startY) {
+function addGeographicDistribution(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Distribución Geográfica", y);
-  y = addSubsectionTitle(doc, "Concentración de Casos por Ubicación", y);
-  y = checkPageBreak(doc, y, 80);
+  if (checkPageBreak(doc, y, 120) !== y) {
+    y = MARGINS.top;
+  }
+  y = addSectionTitle(doc, t("Report-Section-Geography"), y);
+  y = addSubsectionTitle(doc, t("Report-Sub-Geo-Disap"), y);
   doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  doc.text("Tabla 5. Distribución de frecuencias por ubicación geográfica", MARGINS.left, y - 2);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 6", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Geo-Title"), MARGINS.left, y - 2);
   autoTable(doc, {
     ...APA_TABLE_STYLE,
     startY: y,
-    head: [["#", "Ubicación", "Frec. Absoluta", "Frec. Relativa", "Porcentaje"]],
-    body: report.topLocations.map((loc, index) => [
+    head: [["#", t("Report-Col-Location"), { content: t("Report-Col-FreqAbs"), styles: { halign: "right" } }, { content: t("Report-Col-FreqRel"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
+    body: report.topDisappearanceLocations.map((loc, index) => [
       (index + 1).toString(),
       sanitizeText(loc.value),
       loc.fi.toString(),
       loc.hi.toFixed(4),
       `${loc.pi.toFixed(1)}%`
     ]),
-    headStyles: { ...APA_TABLE_STYLE.headStyles, fontSize: FONTS.tiny },
-    styles: { ...APA_TABLE_STYLE.styles, fontSize: FONTS.tiny },
     columnStyles: {
       0: { halign: "center", cellWidth: 10 },
       2: { halign: "right" },
@@ -960,99 +1414,169 @@ function addGeographicAnalysis(doc, report, startY) {
     margin: { left: MARGINS.left, right: MARGINS.right }
   });
   y = doc.lastAutoTable.finalY + 15;
+  if (report.topConfinementLocations.length > 0) {
+    y = checkPageBreak(doc, y, 90);
+    y = addSubsectionTitle(doc, t("Report-Sub-Geo-Conf"), y);
+    doc.setFontSize(FONTS.small);
+    doc.setFont("times", "bold");
+    doc.text("Tabla 7", MARGINS.left, y - 6);
+    doc.setFont("times", "italic");
+    doc.text(t("Report-Table-Geo-Title") + " (Confinamiento)", MARGINS.left, y - 2);
+    autoTable(doc, {
+      ...APA_TABLE_STYLE,
+      startY: y,
+      head: [["#", t("Report-Col-Location"), { content: t("Report-Col-FreqAbs"), styles: { halign: "right" } }, { content: t("Report-Col-FreqRel"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
+      body: report.topConfinementLocations.map((loc, index) => [
+        (index + 1).toString(),
+        sanitizeText(loc.value),
+        loc.fi.toString(),
+        loc.hi.toFixed(4),
+        `${loc.pi.toFixed(1)}%`
+      ]),
+      columnStyles: {
+        0: { halign: "center", cellWidth: 10 },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right" }
+      },
+      margin: { left: MARGINS.left, right: MARGINS.right }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+    doc.setFont("times", "normal");
+    doc.setTextColor(0, 0, 0);
+    const geoNote = t("Report-Note-Centralization");
+    y = printAPAParagraph(doc, geoNote, y);
+    y += 10;
+  }
   return y;
 }
-function addTemporalAnalysis(doc, report, startY) {
+function addTemporalAnalysis(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "6. ANÁLISIS TEMPORAL", y);
-  y = addSubsectionTitle(doc, "Tendencia Mensual (Últimos 12 meses)", y);
-  y = checkPageBreak(doc, y, 80);
+  if (checkPageBreak(doc, y, 130) !== y) {
+    y = MARGINS.top;
+  }
+  y = addSectionTitle(doc, t("Report-Section-Temporal"), y);
+  y = addSubsectionTitle(doc, t("Report-Sub-Time-Trend"), y);
   doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  doc.text("Tabla 6. Evolución cronológica de registros", MARGINS.left, y - 2);
+  doc.setFont("times", "bold");
+  doc.text("Tabla 8", MARGINS.left, y - 6);
+  doc.setFont("times", "italic");
+  doc.text(t("Report-Table-Temp-Title"), MARGINS.left, y - 2);
   autoTable(doc, {
     ...APA_TABLE_STYLE,
     startY: y,
-    head: [["Mes", "Casos Registrados"]],
-    body: report.monthlyTrend.map((m) => [sanitizeText(m.month), m.count.toString()]),
-    theme: "grid",
-    headStyles: { fillColor: COLORS.tableHeader, textColor: COLORS.text, fontStyle: "bold" },
-    styles: { fontSize: FONTS.small, cellPadding: 3 },
+    head: [["#", t("Report-Col-Month"), { content: t("Report-Col-Cases"), styles: { halign: "right" } }, { content: t("Report-Col-Percent"), styles: { halign: "right" } }]],
+    body: report.monthlyTrend.map((m, index) => [
+      (index + 1).toString(),
+      m.month,
+      m.count.toString(),
+      (m.count / report.totalCases * 100).toFixed(1) + "%"
+    ]),
     columnStyles: {
-      1: { halign: "right" }
+      0: { halign: "center", cellWidth: 10 },
+      2: { halign: "right" },
+      3: { halign: "right" }
     },
     margin: { left: MARGINS.left, right: MARGINS.right }
   });
   y = doc.lastAutoTable.finalY + 15;
+  if (report.monthlyTrend.length > 1) {
+    y = checkPageBreak(doc, y, 90);
+    doc.setFont("times", "bold");
+    doc.setFontSize(FONTS.small);
+    doc.text("Figura 3", MARGINS.left, y - 6);
+    doc.setFont("times", "italic");
+    doc.text(t("Report-Fig3-Title"), MARGINS.left, y - 1);
+    y += 4;
+    const lineData = report.monthlyTrend.map((m) => ({
+      label: m.month.split(" ")[0],
+      value: m.count
+    }));
+    drawLineChart(doc, lineData, {
+      x: MARGINS.left,
+      y,
+      width: doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right,
+      height: 60
+    });
+    y += 75;
+    doc.setFont("times", "normal");
+    doc.setFontSize(10);
+    const trendNote = t("Report-Fig3-Note");
+    y = printAPAParagraph(doc, trendNote, y);
+    y += 10;
+  }
   return y;
 }
-function addConclusions(doc, report, startY) {
+function addConclusions(doc, report, startY, t) {
   let y = startY;
-  y = addSectionTitle(doc, "Conclusiones y Dictamen Técnico", y);
+  y = addSectionTitle(doc, t("Report-Section-Conclusions"), y);
   doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   doc.setTextColor(...COLORS.text);
-  const formalConclusions = [
-    `Primus: Los hallazgos estadísticos descritos en el presente informe evidencian una praxis sistemática de detenciones que afectan desproporcionadamente a la población civil en rango de edad productiva, lo cual sugiere una política de Estado orientada a la desarticulación de sectores sociales específicos.`,
-    `Secundus: La alta incidencia constatada en el sector estudiantil (${(report.topProfessions.find((p) => p.value.includes("Estudiante"))?.pi || 0).toFixed(1)}%) constituye un sólido indicio de la criminalización del ejercicio del derecho a la protesta y a la libertad de expresión, conductas protegidas por instrumentos internacionales.`,
-    `Tertius: Desde una perspectiva jurídica, la agregación de estos datos permite identificar elementos de juicio que podrían configurar crímenes de lesa humanidad, de conformidad con lo establecido en el Artículo 7.1.e del Estatuto de Roma (CPI, 1998), dada la naturaleza sistemática y dirigida contra una población civil.`,
-    `Quartus: Se recomienda con carácter de urgencia la elevación de este sustrato probatorio ante la Oficina del Fiscal de la Corte Penal Internacional y la Misión Internacional Independiente de determinación de los hechos sobre la República Bolivariana de Venezuela, a los fines de sustentar procesos de investigación y determinación de responsabilidades individuales y de mando.`,
-    `Quintus: La existencia de un porcentaje significativo de datos no especificados obedece a las condiciones de opacidad institucional y barreras en la documentación, lo cual refuerza la necesidad de este registro sombra para la visibilización de casos que de otro modo quedarían en el anonimato administrativo.`
-  ];
-  formalConclusions.forEach((conclusion, index) => {
+  report.conclusions.forEach((conclusion, index) => {
     y = checkPageBreak(doc, y, 15);
     y += 4;
-    const lines = doc.splitTextToSize(conclusion, doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right);
-    for (const line of lines) {
-      y = checkPageBreak(doc, y, 7);
-      doc.text(line, MARGINS.left, y);
-      y += 6;
+    doc.setCharSpace(0);
+    const isAlert = conclusion.startsWith("ALERTA") || conclusion.startsWith("GRAVE") || conclusion.startsWith("CRÍMENES");
+    if (isAlert) {
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("times", "bold");
+    } else {
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("times", "normal");
     }
+    const cleanText = sanitizeText(conclusion);
+    y = printAPAParagraph(doc, cleanText, y);
   });
   doc.setTextColor(...COLORS.text);
-  doc.setFont("helvetica", "normal");
-  y = checkPageBreak(doc, y, 30);
-  doc.setFontSize(FONTS.small);
-  doc.setFont("helvetica", "italic");
-  const disclaimer = "Descargo de Responsabilidad: Los casos y datos aquí reflejados corresponden a denuncias ciudadanas recibidas y monitoreadas por el sistema NO MÁS SECUESTROS. Su inclusión obedece a criterios de verosimilitud y sistematización de fuentes abiertas, sin que ello constituya per se una sentencia judicial condenatoria o un expediente forense oficial e independiente de cotejo estatal.";
-  const disclaimerLines = doc.splitTextToSize(disclaimer, doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right);
-  for (const line of disclaimerLines) {
-    y = checkPageBreak(doc, y, 7);
-    doc.text(line, MARGINS.left, y);
-    y += 5;
-  }
-  y += 10;
-  y = addReferencesSection(doc, y);
+  doc.setFont("times", "normal");
+  doc.setCharSpace(0);
   return y;
 }
-function addReferencesSection(doc, startY) {
-  let y = startY;
+function addDisclaimer(doc, t) {
+  doc.addPage();
+  let y = MARGINS.top;
   y = addSectionTitle(doc, "Referencias", y);
   const references = [
-    "Corte Penal Internacional. (1998). Estatuto de Roma de la Corte Penal Internacional. https://www.icc-cpi.int/sites/default/files/RS-Spa.pdf",
-    "Foro Penal. (2024). Reporte de Represión en Venezuela: Listado de Presos Políticos. https://foropenal.com/",
+    "Corte Penal Internacional. (1998). Estatuto de Roma de la Corte Penal Internacional. https://www.un.org/spanish/law/icc/statute/spanish/rome_statute(s).pdf",
+    "Foro Penal. (2026). Reporte de Represión en Venezuela: Listado de Presos Políticos. https://foropenal.com/",
     "Naciones Unidas. (1948). Declaración Universal de Derechos Humanos. https://www.un.org/es/about-us/universal-declaration-of-human-rights",
-    "Organización de los Estados Americanos. (1969). Convención Americana sobre Derechos Humanos (Pacto de San José). https://www.oas.org/dil/esp/tratados_b-32_convencion_americana_sobre_derechos_humanos.htm"
+    "Organización de los Estados Americanos. (1969). Convención Americana sobre Derechos Humanos (Pacto de San José). https://www.oas.org/dil/esp/1969_Convenci%C3%B3n_Americana_sobre_Derechos_Humanos.pdf"
   ];
   doc.setFontSize(FONTS.body);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   references.forEach((ref) => {
-    y = checkPageBreak(doc, y, 15);
-    const lines = doc.splitTextToSize(ref, doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right);
-    lines.forEach((line, index) => {
-      const xPos = index === 0 ? MARGINS.left : MARGINS.left + 5;
-      doc.text(line, xPos, y);
-      y += 6;
-    });
-    y += 2;
+    let tokens = [{ text: ref, fontStyle: "normal" }];
+    const firstParen = ref.indexOf("(");
+    const closingParen = ref.indexOf("). ", firstParen);
+    if (closingParen > -1) {
+      const titleStart = closingParen + 3;
+      const titleEnd = ref.indexOf(". ", titleStart);
+      if (titleEnd > -1) {
+        const authorYear = ref.substring(0, titleStart);
+        const title = ref.substring(titleStart, titleEnd + 2);
+        const rest = ref.substring(titleEnd + 2);
+        tokens = [
+          { text: authorYear, fontStyle: "normal" },
+          { text: title, fontStyle: "italic" },
+          { text: rest, fontStyle: "normal" }
+        ];
+      }
+    }
+    y = renderStyledReference(doc, tokens, y);
   });
-  return y;
+  y += 20;
+  y = checkPageBreak(doc, y, 30);
+  doc.setFontSize(FONTS.small);
+  doc.setFont("times", "italic");
+  const disclaimer = t("Report-Disclaimer-Text");
+  y = printAPAParagraph(doc, disclaimer, y);
 }
 function addSectionTitle(doc, title, y) {
   y = checkPageBreak(doc, y, 25);
   const pageWidth = doc.internal.pageSize.getWidth();
   doc.setFontSize(FONTS.heading1);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.setTextColor(...COLORS.text);
   const textWidth = doc.getTextWidth(title);
   doc.text(title, (pageWidth - textWidth) / 2, y);
@@ -1062,7 +1586,7 @@ function addSectionTitle(doc, title, y) {
 function addSubsectionTitle(doc, title, y) {
   const nextY = checkPageBreak(doc, y, 15);
   doc.setFontSize(FONTS.heading2);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.setTextColor(...COLORS.text);
   doc.text(title, MARGINS.left, nextY);
   return nextY + 10;
@@ -1075,19 +1599,6 @@ function checkPageBreak(doc, currentY, requiredSpace) {
   }
   return currentY;
 }
-function addPageNumbers(doc) {
-  const pageCount = doc.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  for (let i = 2; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(FONTS.small);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.text);
-    const pageText = `Página ${i - 1} de ${pageCount - 1}`;
-    const textWidth = doc.getTextWidth(pageText);
-    doc.text(pageText, pageWidth - MARGINS.right - textWidth, MARGINS.top - 10);
-  }
-}
 function formatDate(isoString) {
   const date = new Date(isoString);
   return date.toLocaleDateString("es-VE", {
@@ -1096,81 +1607,196 @@ function formatDate(isoString) {
     day: "numeric"
   });
 }
-function formatDateForFilename(isoString) {
-  const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}${month}${day}`;
-}
 function sanitizeText(text) {
   if (!text) return "";
-  return text.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s\.,:;()!?"'\/\-\+\=]/g, "").replace(/\s+/g, " ").trim();
+  return text.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s\.,:;()!?"'\/\-\+\=%]/g, "").replace(/\s+/g, " ").trim();
+}
+function printAPAParagraph(doc, text, y) {
+  const indent = 12.7;
+  const maxWidth = doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right;
+  const words = text.split(" ");
+  let currentLine = "";
+  let isFirstLine = true;
+  words.forEach((word) => {
+    const testLine = currentLine + (currentLine ? " " : "") + word;
+    const testWidth = doc.getTextWidth(testLine);
+    const availableWidth = isFirstLine ? maxWidth - indent : maxWidth;
+    if (testWidth > availableWidth) {
+      y = checkPageBreak(doc, y, 10);
+      const xPos = isFirstLine ? MARGINS.left + indent : MARGINS.left;
+      doc.text(currentLine, xPos, y);
+      y += 10;
+      currentLine = word;
+      isFirstLine = false;
+    } else {
+      currentLine = testLine;
+    }
+  });
+  if (currentLine) {
+    y = checkPageBreak(doc, y, 10);
+    const xPos = isFirstLine ? MARGINS.left + indent : MARGINS.left;
+    doc.text(currentLine, xPos, y);
+    y += 6;
+  }
+  return y + 4;
+}
+function renderStyledReference(doc, tokens, startY) {
+  let y = checkPageBreak(doc, startY, 15);
+  const maxWidth = doc.internal.pageSize.getWidth() - MARGINS.left - MARGINS.right;
+  const indent = 12.7;
+  let currentLineTokens = [];
+  let currentLineWidth = 0;
+  let isFirstLine = true;
+  tokens.forEach((token) => {
+    const words = token.text.split(/(\s+)/).filter((w) => w.length > 0);
+    doc.setFont("times", token.fontStyle);
+    words.forEach((word) => {
+      const wordWidth = doc.getTextWidth(word);
+      const availableWidth = maxWidth - (isFirstLine ? 0 : indent);
+      if (currentLineWidth + wordWidth > availableWidth) {
+        const startX = MARGINS.left + (isFirstLine ? 0 : indent);
+        currentLineTokens.forEach((t) => {
+          doc.setFont("times", t.fontStyle);
+          doc.text(t.text, startX + t.x, y);
+        });
+        y += 6;
+        y = checkPageBreak(doc, y, 5);
+        isFirstLine = false;
+        currentLineWidth = 0;
+        currentLineTokens = [];
+        const indWidth = maxWidth - indent;
+        if (wordWidth > indWidth) {
+          let remaining = word;
+          while (doc.getTextWidth(remaining) > indWidth) {
+            let splitIdx = remaining.length;
+            while (doc.getTextWidth(remaining.substring(0, splitIdx)) > indWidth && splitIdx > 0) {
+              splitIdx--;
+            }
+            if (splitIdx === 0) splitIdx = 10;
+            const chunk = remaining.substring(0, splitIdx);
+            doc.setFont("times", token.fontStyle);
+            doc.text(chunk, MARGINS.left + indent, y);
+            y += 6;
+            y = checkPageBreak(doc, y, 5);
+            remaining = remaining.substring(splitIdx);
+          }
+          if (remaining) {
+            currentLineTokens.push({ text: remaining, fontStyle: token.fontStyle, x: 0 });
+            currentLineWidth = doc.getTextWidth(remaining);
+          }
+          return;
+        }
+      }
+      currentLineTokens.push({
+        text: word,
+        fontStyle: token.fontStyle,
+        x: currentLineWidth
+      });
+      currentLineWidth += wordWidth;
+    });
+  });
+  if (currentLineTokens.length > 0) {
+    const startX = MARGINS.left + (isFirstLine ? 0 : indent);
+    currentLineTokens.forEach((t) => {
+      doc.setFont("times", t.fontStyle);
+      doc.text(t.text, startX + t.x, y);
+    });
+    y += 6;
+  }
+  return y + 6;
 }
 
 function StatsEngineContent() {
-  const { translate } = useLanguage();
+  const { translate, currentLang } = useLanguage();
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
-    fetch("/api/desaparecidos?estado_registro=aprobado").then((response) => response.json()).then((data2) => {
-      setData(data2.desaparecidos || []);
+    fetch("/api/inventario?estado_registro=aprobado").then((response) => response.json()).then((data2) => {
+      setData(data2.objetos || []);
       setIsLoading(false);
     }).catch(() => setIsLoading(false));
   }, []);
   const casosRegistrados = data.length;
-  const casosConDatosCompletos = data.filter((d) => d.nombre && d.edad && d.sexo).length;
-  const hombres = data.filter((d) => d.sexo === "Masculino").length;
-  const mujeres = data.filter((d) => d.sexo === "Femenino").length;
-  const sinGenero = casosRegistrados - hombres - mujeres;
-  const menores = data.filter((d) => d.edad !== void 0 && d.edad < 18).length;
-  const adultos = data.filter((d) => d.edad !== void 0 && d.edad >= 18 && d.edad < 65).length;
-  const mayores = data.filter((d) => d.edad !== void 0 && d.edad >= 65).length;
-  const sinEdad = data.filter((d) => d.edad === void 0).length;
+  const casosConDatosCompletos = data.filter((d) => d.nombre && d.antiguedad && d.categoria).length;
+  const tipoA = data.filter((d) => d.categoria === "Tipo A").length;
+  const tipoB = data.filter((d) => d.categoria === "Tipo B").length;
+  const sinCategoria = casosRegistrados - tipoA - tipoB;
+  const nuevos = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad < 2).length;
+  const recientes = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 2 && d.antiguedad < 5).length;
+  const estandar = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 5 && d.antiguedad < 10).length;
+  const antiguos = data.filter((d) => d.antiguedad !== void 0 && d.antiguedad >= 10).length;
+  const sinAntiguedad = data.filter((d) => d.antiguedad === void 0).length;
   const conImagen = data.filter((d) => d.imagen && d.imagen.length > 0).length;
-  const venezolanos = data.filter((d) => d.extranjero === "V").length;
-  const extranjeros = data.filter((d) => d.extranjero === "E").length;
+  const paisesOrigen = data.map((d) => normalizeNationality(d.pais_origen));
+  const nacionales = paisesOrigen.filter((n) => n === "Nacional").length;
+  const sinPaisOrigen = paisesOrigen.filter((n) => n === "No especificada").length;
+  const importados = casosRegistrados - nacionales - sinPaisOrigen;
   const top10Edades = useMemo(() => {
-    const edadesCount = {};
+    const antiguedadesCount = {};
     data.forEach((d) => {
-      if (d.edad && d.edad > 0 && d.edad <= 100) {
-        edadesCount[d.edad] = (edadesCount[d.edad] || 0) + 1;
+      if (d.antiguedad && d.antiguedad > 0 && d.antiguedad <= 100) {
+        antiguedadesCount[d.antiguedad] = (antiguedadesCount[d.antiguedad] || 0) + 1;
       }
     });
-    return Object.entries(edadesCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([edad, count]) => ({ name: `${edad} años`, value: count }));
-  }, [data]);
-  const casosPorEstado = useMemo(() => {
-    const estadosCount = {};
+    return Object.entries(antiguedadesCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([antiguedad, count]) => ({ name: translate("Stats-Age-Years", { age: antiguedad }), value: count }));
+  }, [data, translate]);
+  const ultimoLugarConocido = useMemo(() => {
+    const locationsCount = {};
     data.forEach((d) => {
-      const estado = d.lugar_de_desaparicion || d.lugar_de_confinamiento || "Sin especificar";
-      const parts = estado.split(",");
-      const estadoNombre = parts.length > 1 ? parts[parts.length - 1].trim() : estado.trim();
-      estadosCount[estadoNombre] = (estadosCount[estadoNombre] || 0) + 1;
+      if (d.ultimo_lugar_conocido && d.ultimo_lugar_conocido.trim()) {
+        const lugar = d.ultimo_lugar_conocido;
+        const parts = lugar.split(",");
+        const baseName = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
+        const normalized = normalizeLocation(baseName);
+        if (normalized) {
+          locationsCount[normalized] = (locationsCount[normalized] || 0) + 1;
+        }
+      }
     });
-    return Object.entries(estadosCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([estado, count]) => ({ name: estado, value: count }));
+    return Object.entries(locationsCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([location, count]) => ({ name: location, value: count }));
+  }, [data]);
+  const ubicacionActual = useMemo(() => {
+    const centersCount = {};
+    data.forEach((d) => {
+      if (d.ubicacion_actual && d.ubicacion_actual.trim()) {
+        const lugar = d.ubicacion_actual;
+        const parts = lugar.split(",");
+        const baseName = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
+        const normalized = normalizeLocation(baseName);
+        if (normalized) {
+          centersCount[normalized] = (centersCount[normalized] || 0) + 1;
+        }
+      }
+    });
+    return Object.entries(centersCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([center, count]) => ({ name: center, value: count }));
   }, [data]);
   const casosPorMes = useMemo(() => {
     const mesesCount = {};
     data.forEach((d) => {
-      if (d.fecha) {
-        const parts = d.fecha.split("-");
+      if (d.fecha_registro) {
+        const parts = d.fecha_registro.split("-");
         if (parts.length >= 2) {
           const mesKey = `${parts[0]}-${parts[1]}`;
           mesesCount[mesKey] = (mesesCount[mesKey] || 0) + 1;
         }
       }
     });
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const locale = currentLang === "es" ? "es-ES" : "en-US";
+    const monthFormatter = new Intl.DateTimeFormat(locale, { month: "short" });
     return Object.entries(mesesCount).sort((a, b) => a[0].localeCompare(b[0])).slice(-12).map(([mes, count]) => {
       const [year, month] = mes.split("-");
-      return { date: `${monthNames[parseInt(month) - 1]} ${year.slice(2)}`, cases: count };
+      const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      let monthLabel = monthFormatter.format(monthDate);
+      monthLabel = monthLabel.replace(".", "");
+      monthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+      return { date: `${monthLabel} ${year.slice(2)}`, cases: count };
     });
-  }, [data]);
+  }, [data, currentLang]);
   const profesionesTop = useMemo(() => {
     const categoriasCount = {};
     data.forEach((d) => {
-      if (d.profesion && d.profesion.trim()) {
-        const categoria = categorizarProfesion(d.profesion);
+      if (d.tipo_objeto && d.tipo_objeto.trim()) {
+        const categoria = categorizarProfesion(d.tipo_objeto);
         categoriasCount[categoria] = (categoriasCount[categoria] || 0) + 1;
       }
     });
@@ -1199,7 +1825,7 @@ function StatsEngineContent() {
       /* @__PURE__ */ jsx(
         MetricCard,
         {
-          title: "Total de Casos",
+          title: translate("Stats-Metric-Total"),
           value: casosRegistrados.toLocaleString(),
           icon: Users
         }
@@ -1207,7 +1833,7 @@ function StatsEngineContent() {
       /* @__PURE__ */ jsx(
         MetricCard,
         {
-          title: "Con Fotografía",
+          title: translate("Stats-Metric-WithPhoto"),
           value: conImagen.toLocaleString(),
           icon: Camera
         }
@@ -1215,72 +1841,75 @@ function StatsEngineContent() {
       /* @__PURE__ */ jsx(
         MetricCard,
         {
-          title: "Menores de Edad",
-          value: menores.toLocaleString(),
+          title: translate("Stats-Metric-Minors"),
+          value: nuevos.toLocaleString(),
           icon: Baby
         }
       ),
       /* @__PURE__ */ jsx(
         MetricCard,
         {
-          title: "Datos Completos",
+          title: translate("Stats-Metric-CompleteData"),
           value: casosConDatosCompletos.toLocaleString(),
           icon: AlertTriangle
         }
       )
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6", children: [
-      casosPorMes.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: "📅 Casos Registrados por Mes", fullWidth: true, children: /* @__PURE__ */ jsx(StatsTimelineChart, { data: casosPorMes, height: 280 }) }),
-      /* @__PURE__ */ jsx(ChartCard, { title: "👤 Distribución por Género", children: /* @__PURE__ */ jsx(
+      casosPorMes.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-CasesPerMonth"), fullWidth: true, children: /* @__PURE__ */ jsx(StatsTimelineChart, { data: casosPorMes, height: 280 }) }),
+      /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-GenderDistribution"), children: /* @__PURE__ */ jsx(
         StatsDonutChart,
         {
           data: [
-            { name: "Hombres", value: hombres },
-            { name: "Mujeres", value: mujeres },
-            { name: "Sin especificar", value: sinGenero }
+            { name: translate("Stats-Label-Men"), value: tipoA },
+            { name: translate("Stats-Label-Women"), value: tipoB },
+            { name: translate("Stats-Label-NotSpecified"), value: sinCategoria }
           ].filter((d) => d.value > 0)
         }
       ) }),
-      /* @__PURE__ */ jsx(ChartCard, { title: "🌎 Por Nacionalidad", children: /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-ByNationality"), children: /* @__PURE__ */ jsx(
         StatsDonutChart,
         {
           data: [
-            { name: "Venezolanos", value: venezolanos },
-            { name: "Extranjeros", value: extranjeros }
+            { name: translate("Stats-Label-Venezuelans"), value: nacionales },
+            { name: translate("Stats-Label-Foreigners"), value: importados },
+            { name: translate("Stats-Label-NotSpecified"), value: sinPaisOrigen }
           ].filter((d) => d.value > 0),
-          colors: [STATS_COLORS.secondary, STATS_COLORS.neutral]
+          colors: [STATS_COLORS.secondary, STATS_COLORS.neutral, STATS_COLORS.gray1]
         }
       ) }),
-      /* @__PURE__ */ jsx(ChartCard, { title: "📊 Distribución por Edad", children: /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-AgeDistribution"), children: /* @__PURE__ */ jsx(
         StatsDonutChart,
         {
           data: [
-            { name: "Menores de 18", value: menores },
-            { name: "Adultos (18-64)", value: adultos },
-            { name: "Mayores de 65", value: mayores },
-            { name: "Sin especificar", value: sinEdad }
+            { name: translate("Stats-Label-Under18"), value: nuevos },
+            { name: translate("Stats-Label-Adults18to64"), value: recientes + estandar },
+            { name: translate("Stats-Label-Over65"), value: antiguos },
+            { name: translate("Stats-Label-NotSpecified"), value: sinAntiguedad }
           ].filter((d) => d.value > 0),
           colors: [STATS_COLORS.critical, STATS_COLORS.primary, STATS_COLORS.neutral, STATS_COLORS.gray1]
         }
       ) }),
-      /* @__PURE__ */ jsx(ChartCard, { title: "📷 Calidad de Datos", children: /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-DataQuality"), children: /* @__PURE__ */ jsx(
         StatsDonutChart,
         {
           data: [
-            { name: "Con fotografía", value: conImagen },
-            { name: "Sin fotografía", value: casosRegistrados - conImagen }
+            { name: translate("Stats-Label-WithPhoto"), value: conImagen },
+            { name: translate("Stats-Label-WithoutPhoto"), value: casosRegistrados - conImagen }
           ],
           colors: [STATS_COLORS.primary, STATS_COLORS.gray1]
         }
       ) }),
-      top10Edades.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: "🔢 Top 10 Edades Más Frecuentes", fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: top10Edades, color: STATS_COLORS.secondary, height: 300 }) }),
-      casosPorEstado.length > 0 && casosPorEstado[0].name !== "Sin especificar" && /* @__PURE__ */ jsx(ChartCard, { title: "📍 Casos por Ubicación (Top 10)", fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: casosPorEstado, color: STATS_COLORS.primary, height: 350 }) }),
-      profesionesTop.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: "💼 Profesiones Más Afectadas", fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: profesionesTop, color: STATS_COLORS.neutral, height: 350 }) })
+      top10Edades.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-Top10Ages"), fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: top10Edades, color: STATS_COLORS.secondary, height: 300 }) }),
+      ultimoLugarConocido.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-DisappearanceLocationsTop10"), fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: ultimoLugarConocido, color: STATS_COLORS.critical, height: 350 }) }),
+      ubicacionActual.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-ConfinementCentersTop10"), fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: ubicacionActual, color: STATS_COLORS.primary, height: 350 }) }),
+      profesionesTop.length > 0 && /* @__PURE__ */ jsx(ChartCard, { title: translate("Stats-Chart-ProfessionsMostAffected"), fullWidth: true, children: /* @__PURE__ */ jsx(StatsBarChart, { data: profesionesTop, color: STATS_COLORS.neutral, height: 350 }) })
     ] }),
     /* @__PURE__ */ jsx(ReportSection, { data })
   ] });
 }
 function ReportSection({ data }) {
+  const { translate } = useLanguage();
   const [report, setReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   useCallback(() => {
@@ -1296,26 +1925,14 @@ function ReportSection({ data }) {
     setTimeout(() => {
       const generatedReport = generateStatisticalReport(data);
       setReport(generatedReport);
-      generateProfessionalPDF(generatedReport);
+      generateProfessionalPDF(generatedReport, translate);
       setIsGenerating(false);
     }, 500);
   }, [data]);
-  useCallback(() => {
-    if (!report) return;
-    const content = generateTextReport(report);
-    const date = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    downloadReport(content, `informe_estadistico_${date}.txt`, "text");
-  }, [report]);
-  useCallback(() => {
-    if (!report) return;
-    const content = generateCSVReport(report);
-    const date = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    downloadReport(content, `datos_estadisticos_${date}.csv`, "csv");
-  }, [report]);
   return /* @__PURE__ */ jsxs("div", { className: "mt-8 space-y-6", children: [
     /* @__PURE__ */ jsxs("div", { className: "bg-card border border-border rounded-xl p-6 text-center", children: [
-      /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: "📊 Generar Informe Profesional" }),
-      /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm mb-4", children: "Genera un informe estadístico profesional en formato PDF con análisis detallado, tablas formales y conclusiones basadas en los datos. Formato institucional tipo APA." }),
+      /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: translate("Stats-Report-Title") }),
+      /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm mb-4", children: translate("Stats-Report-Description") }),
       /* @__PURE__ */ jsx(
         "button",
         {
@@ -1324,53 +1941,53 @@ function ReportSection({ data }) {
           className: "inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-semibold",
           children: isGenerating ? /* @__PURE__ */ jsxs(Fragment, { children: [
             /* @__PURE__ */ jsx("div", { className: "animate-spin rounded-full h-5 w-5 border-b-2 border-current" }),
-            "Generando PDF profesional..."
+            translate("Stats-Report-Generating")
           ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
             /* @__PURE__ */ jsx(FileText, { className: "h-5 w-5" }),
-            "Generar Informe PDF"
+            translate("Stats-Report-GenerateButton")
           ] })
         }
       ),
-      data.length === 0 && /* @__PURE__ */ jsx("p", { className: "text-destructive text-xs mt-3", children: "No hay datos disponibles para generar el informe" })
+      data.length === 0 && /* @__PURE__ */ jsx("p", { className: "text-destructive text-xs mt-3", children: translate("Stats-Report-NoData") })
     ] }),
     report && /* @__PURE__ */ jsxs("div", { className: "space-y-6 stats-fade-in", children: [
       /* @__PURE__ */ jsxs("div", { className: "bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center", children: [
-        /* @__PURE__ */ jsx("p", { className: "text-green-200 font-semibold", children: "✅ Informe PDF generado exitosamente" }),
-        /* @__PURE__ */ jsx("p", { className: "text-green-200/70 text-sm mt-1", children: "El archivo se ha descargado automáticamente" })
+        /* @__PURE__ */ jsx("p", { className: "text-green-200 font-semibold", children: translate("Stats-Report-SuccessTitle") }),
+        /* @__PURE__ */ jsx("p", { className: "text-green-200/70 text-sm mt-1", children: translate("Stats-Report-SuccessSubtitle") })
       ] }),
       report.ageStats && /* @__PURE__ */ jsxs("div", { className: "bg-card border border-border rounded-xl p-6", children: [
-        /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: "📈 Resumen Estadístico de Edad" }),
+        /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: translate("Stats-Report-AgeSummaryTitle") }),
         /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 md:grid-cols-4 gap-4 text-center", children: [
           /* @__PURE__ */ jsxs("div", { className: "bg-background/50 rounded-lg p-3", children: [
             /* @__PURE__ */ jsx("div", { className: "text-2xl font-bold text-foreground", children: report.ageStats.mean.toFixed(1) }),
-            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: "Media (años)" })
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: translate("Stats-Report-AgeMean") })
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "bg-background/50 rounded-lg p-3", children: [
             /* @__PURE__ */ jsx("div", { className: "text-2xl font-bold text-foreground", children: report.ageStats.median.toFixed(1) }),
-            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: "Mediana (años)" })
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: translate("Stats-Report-AgeMedian") })
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "bg-background/50 rounded-lg p-3", children: [
             /* @__PURE__ */ jsxs("div", { className: "text-2xl font-bold text-foreground", children: [
               "±",
               report.ageStats.stdDev.toFixed(1)
             ] }),
-            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: "Desv. Estándar" })
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: translate("Stats-Report-AgeStdDev") })
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "bg-background/50 rounded-lg p-3", children: [
             /* @__PURE__ */ jsxs("div", { className: "text-2xl font-bold text-foreground", children: [
               report.ageStats.cv.toFixed(1),
               "%"
             ] }),
-            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: "Coef. Variación" })
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: translate("Stats-Report-AgeCV") })
           ] })
         ] })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-card border border-border rounded-xl p-6", children: [
-        /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: "📝 Conclusiones y Observaciones" }),
+        /* @__PURE__ */ jsx("h3", { className: "font-display text-lg font-semibold text-foreground mb-4", style: { fontFamily: "'Playfair Display', serif" }, children: translate("Stats-Report-ConclusionsTitle") }),
         /* @__PURE__ */ jsx("div", { className: "space-y-3", children: report.conclusions.map((conclusion, index) => /* @__PURE__ */ jsxs(
           "div",
           {
-            className: `p-4 rounded-lg text-sm leading-relaxed ${conclusion.includes("ALERTA") || conclusion.includes("PREOCUPANTE") ? "bg-red-500/10 border border-red-500/30 text-red-200" : "bg-background/50 text-foreground/80"}`,
+            className: `p-4 rounded-lg text-sm leading-relaxed ${conclusion.includes("ALERTA") || conclusion.includes("PREOCUPANTE") || conclusion.includes("GRAVE") || conclusion.includes("CRÍMENES") ? "bg-red-500/10 border border-red-500/30 text-red-200" : "bg-background/50 text-foreground/80"}`,
             children: [
               /* @__PURE__ */ jsxs("span", { className: "font-semibold text-foreground", children: [
                 index + 1,
@@ -1391,10 +2008,10 @@ function StatsEngine() {
 }
 
 const $$Estadisticas = createComponent(($$result, $$props, $$slots) => {
-  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "No M\xE1s Secuestros" }, { "default": ($$result2) => renderTemplate` ${renderComponent($$result2, "StatsEngine", StatsEngine, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/StatsEngine", "client:component-export": "default" })} ${maybeRenderHead()}<div style="height: 60px;"></div> ` })}`;
-}, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/estadisticas.astro", void 0);
+  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "DataTracker - Anal\xEDticas" }, { "default": ($$result2) => renderTemplate` ${renderComponent($$result2, "StatsEngine", StatsEngine, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/StatsEngine", "client:component-export": "default" })} ${maybeRenderHead()}<div style="height: 60px;"></div> ` })}`;
+}, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/estadisticas.astro", void 0);
 
-const $$file = "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/estadisticas.astro";
+const $$file = "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/estadisticas.astro";
 const $$url = "/estadisticas";
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({

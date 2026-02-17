@@ -1,12 +1,11 @@
-import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_CJfq-tyP.mjs';
-import { $ as $$Layout } from '../chunks/Layout_BnVrAAn4.mjs';
+import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_D0FKrmaD.mjs';
+import { L as LanguageProvider, u as useTranslation, $ as $$Layout } from '../chunks/i18n_BgOPVVWt.mjs';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import * as React from 'react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { c as cn, I as Input, B as Button } from '../chunks/input_DaDLUbK_.mjs';
 import { u as useToast } from '../chunks/use-toast_DpGr9H6u.mjs';
-import { L as LanguageProvider, a as useTranslation } from '../chunks/i18n_Bd6mPn--.mjs';
-/* empty css                                        */
+/* empty css                                      */
 export { renderers } from '../renderers.mjs';
 
 const Card = React.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx(
@@ -330,10 +329,10 @@ function LoginForm() {
 }
 
 const $$Login = createComponent(($$result, $$props, $$slots) => {
-  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "Login" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<main class="container mx-auto mt-8"> ${renderComponent($$result2, "LoginForm", LoginForm, { "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/LoginForm.tsx", "client:component-export": "default" })} </main> ` })}`;
-}, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/login.astro", void 0);
+  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "Login" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<main class="container mx-auto mt-8"> ${renderComponent($$result2, "LoginForm", LoginForm, { "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/LoginForm.tsx", "client:component-export": "default" })} </main> ` })}`;
+}, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/login.astro", void 0);
 
-const $$file = "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/login.astro";
+const $$file = "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/login.astro";
 const $$url = "/login";
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({

@@ -189,7 +189,7 @@ export const VALIDATION_CONFIG = {
     // Valid values
     VALID_SEXO: ['Masculino', 'Femenino'] as const,
     VALID_EXTRANJERO: ['V', 'E'] as const,
-    VALID_ESTADOS: ['pendiente', 'aprobado', 'rechazado'] as const,
+    VALID_ESTADOS: ['pendiente', 'aprobado', 'rechazado', 'archivado'] as const,
 } as const;
 
 /**

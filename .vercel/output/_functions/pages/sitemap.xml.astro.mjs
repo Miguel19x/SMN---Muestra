@@ -1,7 +1,7 @@
 export { renderers } from '../renderers.mjs';
 
 const GET = async () => {
-  const baseUrl = "https://nomassecuestros.vercel.app";
+  const baseUrl = "https://datatracker-demo.vercel.app";
   const staticPages = [
     { url: "", changefreq: "daily", priority: 1 },
     { url: "/estadisticas", changefreq: "weekly", priority: 0.8 },

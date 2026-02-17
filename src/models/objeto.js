@@ -86,9 +86,17 @@ const ObjetoSchema = new mongoose.Schema({
     },
     estado_registro: {
         type: String,
-        enum: ['pendiente', 'aprobado'],
+        enum: ['pendiente', 'aprobado', 'archivado'],
         default: 'pendiente',
         required: true,
+    },
+    fecha_archivado: {
+        type: Date,
+        required: false,
+    },
+    motivo_archivado: {
+        type: String,
+        required: false,
     }
 }, {
     timestamps: true,
@@ -102,6 +110,7 @@ ObjetoSchema.index({ codigo: 1 });
 ObjetoSchema.index({ fecha_registro: -1 });
 ObjetoSchema.index({ etiqueta: 1 });
 ObjetoSchema.index({ estado_registro: 1, fecha_registro: -1 });
+ObjetoSchema.index({ estado_registro: 1, fecha_archivado: -1 });
 ObjetoSchema.index({ ultimo_lugar_conocido: 1 });
 
 // ✅ Exportar modelo - usa colección 'Desaparecido' para compatibilidad con DB existente

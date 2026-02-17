@@ -1,63 +1,50 @@
-import { e as createComponent, m as maybeRenderHead, n as renderScript, k as renderComponent, l as Fragment, r as renderTemplate } from '../chunks/astro/server_CJfq-tyP.mjs';
-import { $ as $$Layout } from '../chunks/Layout_BnVrAAn4.mjs';
-/* empty css                                 */
+import { e as createComponent, m as maybeRenderHead, l as renderScript, r as renderTemplate, f as createAstro, k as renderComponent } from '../chunks/astro/server_D0FKrmaD.mjs';
+import { a as useLanguage, L as LanguageProvider, $ as $$Layout } from '../chunks/i18n_BgOPVVWt.mjs';
 import 'clsx';
+/* empty css                                 */
 import { jsx, jsxs } from 'react/jsx-runtime';
 import React__default, { Component, lazy, useState, Suspense, useCallback, useRef, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { u as useLanguage, L as LanguageProvider } from '../chunks/i18n_Bd6mPn--.mjs';
-import { T as Table, a as TableHeader, b as TableRow, c as TableHead, d as TableBody, e as TableCell, u as useFetchData, o as useFilteredData, p as SearchBar, q as SearchFieldSelector, E as ErrorBoundary, P as Pagination } from '../chunks/Pagination_Dzmz6ytF.mjs';
+import { T as Table, a as TableHeader, b as TableRow, c as TableHead, d as TableBody, e as TableCell, r as getCondicionEstado, s as getAntiguedadStage, u as useFetchData, o as useFilteredData, p as SearchBar, q as SearchFieldSelector, E as ErrorBoundary, P as Pagination, t as formatCodigo, v as renderValue } from '../chunks/Pagination_Biy3-Yvx.mjs';
 import { B as Button } from '../chunks/input_DaDLUbK_.mjs';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import { g as getLegalCondition, a as getAgeStage, f as formatCedula, r as renderValue } from '../chunks/utils_CdDBA7zL.mjs';
-/* empty css                                        */
+/* empty css                                      */
 export { renderers } from '../renderers.mjs';
 
 const $$Header = createComponent(async ($$result, $$props, $$slots) => {
   return renderTemplate`${maybeRenderHead()}<section class="hero-gradient flex flex-col items-center justify-center px-3 sm:px-4 theme-transition relative" style="height: calc(100vh - 4rem); min-height: 400px;" data-astro-cid-hpnw4vwy> <div class="text-center max-w-4xl mx-auto w-full flex flex-col items-center justify-center flex-1" data-astro-cid-hpnw4vwy> <!-- Typewriter Title --> <h1 id="changing-title" class="changing-title text-gray-200 font-back text-center drop-shadow-lg px-2" data-i18n="Title-1" data-astro-cid-hpnw4vwy>
-NO MÁS SECUESTROS
-</h1> <!-- Stars --> <div class="flex items-center justify-center space-x-1 sm:space-x-2 my-3 sm:my-4" data-astro-cid-hpnw4vwy> ${[...Array(7)].map((_) => renderTemplate`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 star" data-astro-cid-hpnw4vwy> ${renderComponent($$result, "Fragment", Fragment, { "data-astro-cid-hpnw4vwy": true }, { "default": async ($$result2) => renderTemplate` <path stroke="none" d="M0 0h24v24H0z" fill="none" data-astro-cid-hpnw4vwy></path> <path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" data-astro-cid-hpnw4vwy></path> ` })} </svg>`)} </div> <!-- Tricolor Bar --> <div class="flex justify-center" data-astro-cid-hpnw4vwy> <div class="tricolor-bar w-40 sm:w-56 md:w-72" data-astro-cid-hpnw4vwy> <div class="tricolor-yellow" data-astro-cid-hpnw4vwy></div> <div class="tricolor-blue" data-astro-cid-hpnw4vwy></div> <div class="tricolor-red" data-astro-cid-hpnw4vwy></div> </div> </div> <!-- Phrase --> <p class="mt-4 sm:mt-6 text-gray-200 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-medium px-4 sm:px-0" data-i18n="Phrase-1" style="font-family: 'Inter', sans-serif;" data-astro-cid-hpnw4vwy>
-¡No son solo números, son personas!
+DATATRACKER
+</h1> <!-- Accent Bar --> <div class="flex justify-center" data-astro-cid-hpnw4vwy> <div class="accent-bar w-40 sm:w-56 md:w-72" data-astro-cid-hpnw4vwy></div> </div> <!-- Phrase --> <p class="mt-4 sm:mt-6 text-gray-200 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-medium px-4 sm:px-0" data-i18n="Phrase-1" style="font-family: 'Inter', sans-serif;" data-astro-cid-hpnw4vwy>
+La plataforma inteligente de inventario
 </p> </div> <!-- Scroll Indicator --> <div class="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 scroll-indicator flex flex-col items-center justify-center flex-1" data-astro-cid-hpnw4vwy> <span data-i18n="Move-Mouse" class="text-center text-[10px] uppercase tracking-widest text-gray-800 dark:text-gray-300 mb-2 opacity-70 font-medium" data-astro-cid-hpnw4vwy>
-Desplazar
-</span> <!-- Mobile: Chevron arrow --> <svg class="w-8 h-8 text-gray-800 dark:text-gray-300 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-hpnw4vwy> <polyline points="6 9 12 15 18 9" data-astro-cid-hpnw4vwy></polyline> </svg> <!-- Desktop: Mouse --> <div class="hidden sm:flex w-6 h-10 border-2 border-gray-800 dark:border-gray-300 rounded-full items-start justify-center p-1" data-astro-cid-hpnw4vwy> <div class="w-1.5 h-2.5 bg-gray-800 dark:bg-gray-300 rounded-full" data-astro-cid-hpnw4vwy></div> </div> </div> </section> ${renderScript($$result, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/header.astro?astro&type=script&index=0&lang.ts")}`;
-}, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/header.astro", void 0);
+Explorar
+</span> <!-- Mobile: Chevron arrow --> <svg class="w-8 h-8 text-gray-800 dark:text-gray-300 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-hpnw4vwy> <polyline points="6 9 12 15 18 9" data-astro-cid-hpnw4vwy></polyline> </svg> <!-- Desktop: Mouse --> <div class="hidden sm:flex w-6 h-10 border-2 border-gray-800 dark:border-gray-300 rounded-full items-start justify-center p-1" data-astro-cid-hpnw4vwy> <div class="w-1.5 h-2.5 bg-gray-800 dark:bg-gray-300 rounded-full" data-astro-cid-hpnw4vwy></div> </div> </div> </section> ${renderScript($$result, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/header.astro?astro&type=script&index=0&lang.ts")}`;
+}, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/header.astro", void 0);
 
+const $$Astro = createAstro();
 const $$InfoSection = createComponent(($$result, $$props, $$slots) => {
-  return renderTemplate`${maybeRenderHead()}<section class="py-10 sm:py-16 px-4 sm:px-6 bg-background theme-transition" data-astro-cid-bsieafsl> <div class="container mx-auto max-w-5xl" data-astro-cid-bsieafsl> <!-- Two-column grid layout - stack on mobile --> <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10" data-astro-cid-bsieafsl> <!-- Card 1: Nuestro Propósito --> <article data-astro-cid-bsieafsl> <h3 class="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2 text-left" data-i18n="Subtitle-1" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
-Nuestro Propósito
-</h3> <!-- Tricolor accent line --> <div class="flex h-[3px] w-20 sm:w-24 mb-3 sm:mb-4" data-astro-cid-bsieafsl> <div class="flex-1 tricolor-yellow" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-blue" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-red" data-astro-cid-bsieafsl></div> </div> <p class="text-muted-foreground leading-relaxed text-sm sm:text-base text-left" data-i18n="Paragraph-1" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
-Esta página ha sido creada con el propósito de divulgar un
-                    registro detallado de todos los secuestros que han sido
-                    producto de la persecución política ejecutada por el régimen
-                    tras las elecciones presidenciales del 28 de julio del 2024.
-                    Nuestro objetivo es que la información recolectada y
-                    expuesta sea precisa y personal, a fin de evitar las
-                    ambigüedades.
-</p> </article> <!-- Card 2: Valor de cada vida --> <article data-astro-cid-bsieafsl> <h3 class="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2 text-left" data-i18n="Subtitle-2" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
-Valor de cada vida
-</h3> <!-- Tricolor accent line --> <div class="flex h-[3px] w-20 sm:w-24 mb-3 sm:mb-4" data-astro-cid-bsieafsl> <div class="flex-1 tricolor-yellow" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-blue" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-red" data-astro-cid-bsieafsl></div> </div> <p class="text-muted-foreground leading-relaxed text-sm sm:text-base text-left" data-i18n="Paragraph-2" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
-Cada persona en esta lista representa una vida: hijo/a,
-                    padre/madre, abuelo/a, nieto/a, primo/a, tío/a, sobrino/a,
-                    amigo/a, vecino/a. Los presos políticos no son un número a
-                    contabilizar, sino personas con allegados y seres queridos
-                    que los esperan y los recuerdan.
-</p> </article> <!-- Card 3: Sobre esta iniciativa --> <article data-astro-cid-bsieafsl> <h3 class="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2 text-left" data-i18n="Subtitle-3" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
-Sobre esta iniciativa
-</h3> <!-- Tricolor accent line --> <div class="flex h-[3px] w-20 sm:w-24 mb-3 sm:mb-4" data-astro-cid-bsieafsl> <div class="flex-1 tricolor-yellow" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-blue" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-red" data-astro-cid-bsieafsl></div> </div> <p class="text-muted-foreground leading-relaxed text-sm sm:text-base text-left" data-i18n="Paragraph-3" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
-Esta iniciativa busca crear conciencia sobre la situación de
-                    los presos políticos en Venezuela. Nuestro objetivo es
-                    mantener viva la memoria de aquellos que han sido
-                    injustamente detenidos y presionar por su liberación.
-</p> </article> <!-- Card 4: Aviso Importante --> <article data-astro-cid-bsieafsl> <h3 class="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2 text-left" data-i18n="Subtitle-4" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
-Aviso Importante
-</h3> <!-- Tricolor accent line --> <div class="flex h-[3px] w-20 sm:w-24 mb-3 sm:mb-4" data-astro-cid-bsieafsl> <div class="flex-1 tricolor-yellow" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-blue" data-astro-cid-bsieafsl></div> <div class="flex-1 tricolor-red" data-astro-cid-bsieafsl></div> </div> <p class="text-muted-foreground leading-relaxed text-sm sm:text-base text-left" data-i18n="Paragraph-4" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
-Si tienes información sobre casos de secuestros políticos o
-                    deseas colaborar con nuestra causa, por favor rellena un
-<a href="/subir-informacion" class="text-primary hover:underline" data-astro-cid-bsieafsl>formulario</a> o comunícate con nosotros en la red social X en nuestra cuenta
-<a href="https://x.com/NoMasSecuestr0s" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline" data-astro-cid-bsieafsl>@NoMasSecuestr0s</a>.
-</p> </article> </div> <!-- Arrow indicator to search section --> <div class="flex flex-col items-center mt-12 sm:mt-16" data-astro-cid-bsieafsl> <a href="#motor-busqueda" class="flex flex-col items-center text-muted-foreground hover:text-primary transition-colors duration-300" aria-label="Ir al buscador" data-astro-cid-bsieafsl> <span class="text-sm mb-2" data-i18n="Component-1" data-astro-cid-bsieafsl>Buscar Detenidos</span> <svg class="w-6 h-6 sm:w-8 sm:h-8 arrow-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-bsieafsl> <polyline points="6 9 12 15 18 9" data-astro-cid-bsieafsl></polyline> </svg> </a> </div> </div> </section>`;
-}, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/InfoSection.astro", void 0);
+  const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
+  Astro2.self = $$InfoSection;
+  Astro2.cookies.get("NEXT_LOCALE")?.value || "es";
+  return renderTemplate`${maybeRenderHead()}<section class="py-10 sm:py-16 px-4 sm:px-6 bg-background theme-transition" data-astro-cid-bsieafsl> <div class="container mx-auto max-w-5xl" data-astro-cid-bsieafsl> <!-- Title --> <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12" style="font-family: 'Playfair Display', serif;" data-i18n="How-It-Works" data-astro-cid-bsieafsl>
+Cómo Funciona
+</h2> <!-- 3-step horizontal flow --> <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12" data-astro-cid-bsieafsl> <!-- Step 1: Register --> <article class="text-center" data-astro-cid-bsieafsl> <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center" data-astro-cid-bsieafsl> <span class="text-3xl font-bold text-primary" data-astro-cid-bsieafsl>1</span> </div> <h3 class="font-display text-xl font-semibold text-foreground mb-3" data-i18n="Step-1-Title" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
+Registra
+</h3> <div class="accent-bar-small w-16 mx-auto mb-3" data-astro-cid-bsieafsl></div> <p class="text-muted-foreground leading-relaxed text-sm" data-i18n="Step-1-Desc" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
+Añade nuevos objetos al inventario con información
+                    detallada: código, categoría, origen, ubicación y más.
+</p> </article> <!-- Step 2: Organize --> <article class="text-center" data-astro-cid-bsieafsl> <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center" data-astro-cid-bsieafsl> <span class="text-3xl font-bold text-primary" data-astro-cid-bsieafsl>2</span> </div> <h3 class="font-display text-xl font-semibold text-foreground mb-3" data-i18n="Step-2-Title" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
+Organiza
+</h3> <div class="accent-bar-small w-16 mx-auto mb-3" data-astro-cid-bsieafsl></div> <p class="text-muted-foreground leading-relaxed text-sm" data-i18n="Step-2-Desc" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
+Busca y filtra por cualquier campo. El sistema detecta
+                    automáticamente el tipo de búsqueda y ofrece paginación.
+</p> </article> <!-- Step 3: Analyze --> <article class="text-center" data-astro-cid-bsieafsl> <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center" data-astro-cid-bsieafsl> <span class="text-3xl font-bold text-primary" data-astro-cid-bsieafsl>3</span> </div> <h3 class="font-display text-xl font-semibold text-foreground mb-3" data-i18n="Step-3-Title" style="font-family: 'Playfair Display', serif;" data-astro-cid-bsieafsl>
+Analiza
+</h3> <div class="accent-bar-small w-16 mx-auto mb-3" data-astro-cid-bsieafsl></div> <p class="text-muted-foreground leading-relaxed text-sm" data-i18n="Step-3-Desc" style="font-family: 'Inter', sans-serif;" data-astro-cid-bsieafsl>
+Visualiza estadísticas con gráficos interactivos y genera
+                    informes profesionales en PDF con análisis detallado.
+</p> </article> </div> <!-- Arrow indicator to analytics --> <div class="flex flex-col items-center mt-12 sm:mt-16" data-astro-cid-bsieafsl> <a href="/estadisticas" class="flex flex-col items-center text-muted-foreground hover:text-primary transition-colors duration-300" aria-label="Ver analíticas" data-astro-cid-bsieafsl> <span class="text-sm mb-2" data-i18n="View-Analytics" data-astro-cid-bsieafsl>Ver Analíticas</span> <svg class="w-6 h-6 sm:w-8 sm:h-8 arrow-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-bsieafsl> <polyline points="6 9 12 15 18 9" data-astro-cid-bsieafsl></polyline> </svg> </a> </div> </div> </section>`;
+}, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/InfoSection.astro", void 0);
 
 class UniversalErrorBoundary extends Component {
   constructor(props) {
@@ -159,11 +146,11 @@ class UniversalErrorBoundary extends Component {
   }
 }
 
-const LazyExpandedRow = lazy(() => import('../chunks/ExpandedRow_CSsVzNeA.mjs'));
-function DesaparecidosTable({
+const LazyExpandedRow = lazy(() => import('../chunks/ExpandedRow_Y3fTYiQ2.mjs'));
+function ObjetosTable({
   data,
   renderValue,
-  formatCedula
+  formatCodigo
 }) {
   const [expandedRow, setExpandedRow] = useState(null);
   const { translate } = useLanguage();
@@ -183,18 +170,18 @@ function DesaparecidosTable({
       /* @__PURE__ */ jsx(TableHead, { className: "w-[5%]" })
     ] }) }),
     /* @__PURE__ */ jsx(TableBody, { children: data.map((item, index) => {
-      const itemKey = item._id && item._id.trim() !== "" ? item._id : item.cedula || `row-fallback-${index}`;
-      if (!item._id || item._id.trim() === "") {
-        console.warn(`DesaparecidosTable: Item at index ${index} has empty/null _id, using fallback key:`, itemKey);
+      const itemKey = item.id && item.id.trim() !== "" ? item.id : item.codigo || `row-fallback-${index}`;
+      if (!item.id || item.id.trim() === "") {
+        console.warn(`ObjetosTable: Item at index ${index} has empty/null id, using fallback key:`, itemKey);
       }
       return /* @__PURE__ */ jsxs(React__default.Fragment, { children: [
         /* @__PURE__ */ jsxs(
           TableRow,
           {
             className: "cursor-pointer",
-            onClick: () => toggleRow(item._id),
+            onClick: () => toggleRow(item.id),
             children: [
-              /* @__PURE__ */ jsx(TableCell, { className: "text-center", children: formatCedula(item) }),
+              /* @__PURE__ */ jsx(TableCell, { className: "text-center", children: formatCodigo(item) }),
               /* @__PURE__ */ jsx(TableCell, { className: "text-center", children: renderValue(item.nombre) }),
               /* @__PURE__ */ jsx(TableCell, { className: "text-center", children: renderValue(item.estado) }),
               /* @__PURE__ */ jsx(TableCell, { children: /* @__PURE__ */ jsx(
@@ -204,23 +191,23 @@ function DesaparecidosTable({
                   size: "sm",
                   onClick: (e) => {
                     e.stopPropagation();
-                    toggleRow(item._id);
+                    toggleRow(item.id);
                   },
-                  "aria-controls": `row-${item._id || item.cedula}`,
-                  "aria-expanded": expandedRow === item._id,
+                  "aria-controls": `row-${item.id || item.codigo}`,
+                  "aria-expanded": expandedRow === item.id,
                   "aria-label": translate("Info-Details", { name: item.nombre }),
-                  children: expandedRow === item._id ? /* @__PURE__ */ jsx(ChevronUp, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx(ChevronDown, { className: "h-4 w-4" })
+                  children: expandedRow === item.id ? /* @__PURE__ */ jsx(ChevronUp, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx(ChevronDown, { className: "h-4 w-4" })
                 }
               ) })
             ]
           }
         ),
-        expandedRow === item._id && /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx(TableRow, { children: /* @__PURE__ */ jsx(TableCell, { colSpan: 4, children: translate("Process2") }) }), children: /* @__PURE__ */ jsx(
+        expandedRow === item.id && /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx(TableRow, { children: /* @__PURE__ */ jsx(TableCell, { colSpan: 4, children: translate("Process2") }) }), children: /* @__PURE__ */ jsx(
           LazyExpandedRow,
           {
             item,
-            getAgeStage: (edad) => getAgeStage(edad, translate),
-            getLegalCondition: (edad) => getLegalCondition(edad, translate),
+            getAntiguedadStage: (antiguedad) => getAntiguedadStage(antiguedad, translate),
+            getCondicionEstado: (antiguedad) => getCondicionEstado(antiguedad, translate),
             renderValue
           }
         ) })
@@ -237,23 +224,23 @@ function SearchEngineContent({ initialSearchTerm = "", focusSearchInput = false 
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const { translate } = useLanguage();
   const {
-    data: allDesaparecidos,
+    data: allObjetos,
     isLoading,
     isError
   } = useFetchData("aprobado");
-  const filteredDesaparecidos = useFilteredData(allDesaparecidos, searchTerm, searchField);
-  const totalPages = Math.ceil((filteredDesaparecidos?.length || 0) / itemsPerPage);
-  const paginatedDesaparecidos = filteredDesaparecidos?.slice(
+  const filteredObjetos = useFilteredData(allObjetos, searchTerm, searchField);
+  const totalPages = Math.ceil((filteredObjetos?.length || 0) / itemsPerPage);
+  const paginatedObjetos = filteredObjetos?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   ) || [];
   const detectSearchField = useCallback((value) => {
     if (!value.trim()) return "";
-    if (/^[\d.]+$/.test(value.trim())) {
-      return "cedula";
+    if (/^[A-Za-z0-9\-]+$/.test(value.trim()) && value.includes("-")) {
+      return "codigo";
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim()) || /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(value.trim())) {
-      return "fecha";
+      return "fecha_registro";
     }
     return "";
   }, []);
@@ -297,7 +284,7 @@ function SearchEngineContent({ initialSearchTerm = "", focusSearchInput = false 
         }
       )
     ] }) }),
-    /* @__PURE__ */ jsx(ErrorBoundary, { children: /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx("div", { className: "text-center", children: translate("Process1") }), children: isLoading ? /* @__PURE__ */ jsx("div", { className: "text-center", children: translate("Process1") }) : isError ? /* @__PURE__ */ jsx("div", { className: "text-red-500 text-center", children: translate("Error") }) : filteredDesaparecidos && filteredDesaparecidos.length > 0 ? /* @__PURE__ */ jsxs("div", { children: [
+    /* @__PURE__ */ jsx(ErrorBoundary, { children: /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx("div", { className: "text-center", children: translate("Process1") }), children: isLoading ? /* @__PURE__ */ jsx("div", { className: "text-center", children: translate("Process1") }) : isError ? /* @__PURE__ */ jsx("div", { className: "text-red-500 text-center", children: translate("Error") }) : filteredObjetos && filteredObjetos.length > 0 ? /* @__PURE__ */ jsxs("div", { children: [
       /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold mb-6 text-center", children: translate("Component-2") }),
       /* @__PURE__ */ jsxs("div", { className: "w-full md:max-w-[85%] mx-auto", children: [
         /* @__PURE__ */ jsx(
@@ -308,13 +295,13 @@ function SearchEngineContent({ initialSearchTerm = "", focusSearchInput = false 
           }
         ),
         /* @__PURE__ */ jsx("div", { className: "overflow-x-auto mt-6", children: /* @__PURE__ */ jsx(
-          DesaparecidosTable,
+          ObjetosTable,
           {
-            data: paginatedDesaparecidos,
+            data: paginatedObjetos,
             renderValue,
-            formatCedula,
-            getAgeStage,
-            getLegalCondition
+            formatCodigo,
+            getAntiguedadStage,
+            getCondicionEstado
           }
         ) })
       ] }),
@@ -333,56 +320,71 @@ function MotorDeBusqueda(props) {
   return /* @__PURE__ */ jsx(UniversalErrorBoundary, { componentName: "Motor de Búsqueda", children: /* @__PURE__ */ jsx(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsx(LanguageProvider, { children: /* @__PURE__ */ jsx(SearchEngineContent, { ...props }) }) }) });
 }
 
-function TweetCarouselContent({ autoScrollInterval = 5e3 }) {
+const features = [
+  {
+    id: "search",
+    icon: "🔍",
+    titleKey: "Feature-Search-Title",
+    descKey: "Feature-Search-Desc",
+    tags: ["Real-time", "Auto-detection", "Pagination"]
+  },
+  {
+    id: "analytics",
+    icon: "📊",
+    titleKey: "Feature-Analytics-Title",
+    descKey: "Feature-Analytics-Desc",
+    tags: ["Recharts", "PDF Reports", "Statistics"]
+  },
+  {
+    id: "i18n",
+    icon: "🌐",
+    titleKey: "Feature-I18n-Title",
+    descKey: "Feature-I18n-Desc",
+    tags: ["ES/EN", "Live Toggle", "Full Coverage"]
+  },
+  {
+    id: "security",
+    icon: "🔒",
+    titleKey: "Feature-Security-Title",
+    descKey: "Feature-Security-Desc",
+    tags: ["2FA", "JWT", "Turnstile", "Rate Limiting"]
+  },
+  {
+    id: "responsive",
+    icon: "📱",
+    titleKey: "Feature-Responsive-Title",
+    descKey: "Feature-Responsive-Desc",
+    tags: ["Mobile-first", "Dark Mode", "Smooth Transitions"]
+  },
+  {
+    id: "cloud",
+    icon: "☁️",
+    titleKey: "Feature-Cloud-Title",
+    descKey: "Feature-Cloud-Desc",
+    tags: ["MongoDB", "R2", "Vercel", "Redis"]
+  }
+];
+function FeatureShowcaseContent({ autoScrollInterval = 5e3 }) {
   const { translate } = useLanguage();
-  const [tweets, setTweets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   useEffect(() => {
-    const fetchTweets = async () => {
-      try {
-        const response = await fetch("/api/tweets?type=project&count=10");
-        if (!response.ok) throw new Error("Failed to fetch");
-        const data = await response.json();
-        setTweets(data);
-        setError(null);
-      } catch (err) {
-        setError(translate("Tweets-Error"));
-        console.error("Error fetching tweets:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTweets();
-  }, []);
-  useEffect(() => {
-    if (tweets.length <= 1 || isPaused) return;
+    if (features.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % tweets.length);
+      setCurrentIndex((prev) => (prev + 1) % features.length);
     }, autoScrollInterval);
     return () => clearInterval(interval);
-  }, [tweets.length, autoScrollInterval, isPaused]);
+  }, [autoScrollInterval, isPaused]);
   const goToSlide = (index) => {
     setCurrentIndex(index);
   };
   const goToPrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + tweets.length) % tweets.length);
+    setCurrentIndex((prev) => (prev - 1 + features.length) % features.length);
   };
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % tweets.length);
+    setCurrentIndex((prev) => (prev + 1) % features.length);
   };
-  if (loading) {
-    return /* @__PURE__ */ jsx("div", { className: "w-full py-8 bg-secondary border-y border-border theme-transition", children: /* @__PURE__ */ jsx("div", { className: "container mx-auto px-4", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-center gap-3", children: [
-      /* @__PURE__ */ jsx("div", { className: "animate-spin rounded-full h-6 w-6 border-b-2 border-primary" }),
-      /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: translate("Tweets-Loading") })
-    ] }) }) });
-  }
-  if (error || tweets.length === 0) {
-    return null;
-  }
   return /* @__PURE__ */ jsx(
     "div",
     {
@@ -390,14 +392,14 @@ function TweetCarouselContent({ autoScrollInterval = 5e3 }) {
       onMouseEnter: () => setIsPaused(true),
       onMouseLeave: () => setIsPaused(false),
       children: /* @__PURE__ */ jsxs("div", { className: "container mx-auto px-4", children: [
-        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-foreground mb-6 text-center", style: { fontFamily: "'Playfair Display', serif" }, children: translate("Tweets-Title") }),
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-foreground mb-6 text-center", style: { fontFamily: "'Playfair Display', serif" }, children: translate("Features-Title") }),
         /* @__PURE__ */ jsxs("div", { className: "relative", ref: carouselRef, children: [
           /* @__PURE__ */ jsx(
             "button",
             {
               onClick: goToPrev,
               className: "absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-card rounded-full shadow-lg hover:bg-accent transition-colors border border-border",
-              "aria-label": "Tweet anterior",
+              "aria-label": "Previous feature",
               children: /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 text-foreground", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M15 19l-7-7 7-7" }) })
             }
           ),
@@ -406,52 +408,19 @@ function TweetCarouselContent({ autoScrollInterval = 5e3 }) {
             {
               className: "flex transition-transform duration-500 ease-in-out",
               style: { transform: `translateX(-${currentIndex * 100}%)` },
-              children: tweets.map((tweet) => /* @__PURE__ */ jsx("div", { className: "w-full flex-shrink-0 px-4", children: /* @__PURE__ */ jsxs(
-                "a",
-                {
-                  href: `https://twitter.com/${tweet.author?.username}/status/${tweet.id}`,
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                  className: "block bg-card rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow border border-border",
-                  children: [
-                    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 mb-3", children: [
-                      tweet.author?.profileImage && /* @__PURE__ */ jsx(
-                        "img",
-                        {
-                          src: tweet.author.profileImage,
-                          alt: tweet.author.name,
-                          className: "w-10 h-10 rounded-full"
-                        }
-                      ),
-                      /* @__PURE__ */ jsxs("div", { className: "flex-1", children: [
-                        /* @__PURE__ */ jsx("p", { className: "font-semibold text-foreground text-sm", children: tweet.author?.name }),
-                        /* @__PURE__ */ jsxs("p", { className: "text-muted-foreground text-xs", children: [
-                          "@",
-                          tweet.author?.username,
-                          " · ",
-                          tweet.formattedDate
-                        ] })
-                      ] }),
-                      /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 text-blue-400", viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }) })
-                    ] }),
-                    /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm line-clamp-3", children: tweet.text }),
-                    tweet.metrics && /* @__PURE__ */ jsxs("div", { className: "flex gap-4 mt-3 text-muted-foreground text-xs", children: [
-                      /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
-                        /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-4 w-4", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" }) }),
-                        tweet.metrics.reply_count
-                      ] }),
-                      /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
-                        /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-4 w-4", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" }) }),
-                        tweet.metrics.retweet_count
-                      ] }),
-                      /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
-                        /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-4 w-4", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" }) }),
-                        tweet.metrics.like_count
-                      ] })
-                    ] })
-                  ]
-                }
-              ) }, tweet.id))
+              children: features.map((feature) => /* @__PURE__ */ jsx("div", { className: "w-full flex-shrink-0 px-4", children: /* @__PURE__ */ jsxs("div", { className: "bg-card rounded-xl shadow-lg p-6 border border-border", children: [
+                /* @__PURE__ */ jsx("div", { className: "text-5xl mb-4 text-center", children: feature.icon }),
+                /* @__PURE__ */ jsx("h3", { className: "text-xl font-semibold text-foreground mb-3 text-center", children: translate(feature.titleKey) }),
+                /* @__PURE__ */ jsx("p", { className: "text-muted-foreground text-sm text-center mb-4", children: translate(feature.descKey) }),
+                /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2 justify-center", children: feature.tags.map((tag) => /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    className: "px-2 py-1 text-xs bg-primary/10 text-primary rounded-md",
+                    children: tag
+                  },
+                  tag
+                )) })
+              ] }) }, feature.id))
             }
           ) }),
           /* @__PURE__ */ jsx(
@@ -459,17 +428,17 @@ function TweetCarouselContent({ autoScrollInterval = 5e3 }) {
             {
               onClick: goToNext,
               className: "absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-card rounded-full shadow-lg hover:bg-accent transition-colors border border-border",
-              "aria-label": "Tweet siguiente",
+              "aria-label": "Next feature",
               children: /* @__PURE__ */ jsx("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 text-foreground", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 5l7 7-7 7" }) })
             }
           )
         ] }),
-        /* @__PURE__ */ jsx("div", { className: "flex justify-center gap-2 mt-4", children: tweets.map((_, index) => /* @__PURE__ */ jsx(
+        /* @__PURE__ */ jsx("div", { className: "flex justify-center gap-2 mt-4", children: features.map((_, index) => /* @__PURE__ */ jsx(
           "button",
           {
             onClick: () => goToSlide(index),
             className: `w-2 h-2 rounded-full transition-colors ${index === currentIndex ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"}`,
-            "aria-label": `Ir al tweet ${index + 1}`
+            "aria-label": `Go to feature ${index + 1}`
           },
           index
         )) })
@@ -477,15 +446,15 @@ function TweetCarouselContent({ autoScrollInterval = 5e3 }) {
     }
   );
 }
-function TweetCarousel() {
-  return /* @__PURE__ */ jsx(LanguageProvider, { children: /* @__PURE__ */ jsx(TweetCarouselContent, {}) });
+function FeatureShowcase() {
+  return /* @__PURE__ */ jsx(LanguageProvider, { children: /* @__PURE__ */ jsx(FeatureShowcaseContent, {}) });
 }
 
 const $$Index = createComponent(($$result, $$props, $$slots) => {
-  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "No M\xE1s Secuestros" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen flex flex-col theme-transition"> <main class="flex-grow"> ${renderComponent($$result2, "Header", $$Header, {})} ${renderComponent($$result2, "InfoSection", $$InfoSection, {})} <!-- Motor de búsqueda: crítico, carga inmediata --> ${renderComponent($$result2, "MotorDeBusqueda", MotorDeBusqueda, { "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/MotorDeBusqueda.tsx", "client:component-export": "default" })} <!-- Carrusel de tweets: no crítico, carga cuando el navegador esté inactivo --> ${renderComponent($$result2, "TweetCarousel", TweetCarousel, { "client:idle": true, "client:component-hydration": "idle", "client:component-path": "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/components/TweetCarousel.tsx", "client:component-export": "default" })} </main> </div> ` })}`;
-}, "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/index.astro", void 0);
+  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "DataTracker" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen flex flex-col theme-transition"> <main class="flex-grow"> ${renderComponent($$result2, "Header", $$Header, {})} ${renderComponent($$result2, "InfoSection", $$InfoSection, {})} <!-- Motor de búsqueda: crítico, carga inmediata --> ${renderComponent($$result2, "MotorDeBusqueda", MotorDeBusqueda, { "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/MotorDeBusqueda.tsx", "client:component-export": "default" })} <!-- Feature Showcase: no crítico, carga cuando el navegador esté inactivo --> ${renderComponent($$result2, "FeatureShowcase", FeatureShowcase, { "client:idle": true, "client:component-hydration": "idle", "client:component-path": "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/components/FeatureShowcase.tsx", "client:component-export": "default" })} </main> </div> ` })}`;
+}, "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/index.astro", void 0);
 
-const $$file = "C:/Users/arang/Desktop/Importante/NoMasSecuestros/src/pages/index.astro";
+const $$file = "C:/Users/arang/Desktop/Importante/SMN - Muestra/src/pages/index.astro";
 const $$url = "";
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({

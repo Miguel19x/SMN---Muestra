@@ -19,7 +19,7 @@ export function generateTextReport(report: StatisticalReport): string {
 
     // Header
     lines.push(divider);
-    lines.push('           INFORME ESTADÍSTICO - NO MÁS SECUESTROS');
+    lines.push('           INFORME ESTADÍSTICO - DATATRACKER INVENTARIO');
     lines.push(`                    Generado: ${formatDate(report.generatedAt)}`);
     lines.push(divider);
     lines.push('');
@@ -27,7 +27,7 @@ export function generateTextReport(report: StatisticalReport): string {
     // 1. General Summary
     lines.push('1. RESUMEN GENERAL');
     lines.push('   ' + subDivider);
-    lines.push(`   • Total de casos registrados: ${report.totalCases.toLocaleString()}`);
+    lines.push(`   • Total de objetos registrados: ${report.totalCases.toLocaleString()}`);
     lines.push(`   • Casos con datos completos: ${report.casesWithCompleteData.toLocaleString()} (${((report.casesWithCompleteData / report.totalCases) * 100).toFixed(1)}%)`);
     lines.push(`   • Casos con fotografía: ${report.casesWithPhoto.toLocaleString()} (${((report.casesWithPhoto / report.totalCases) * 100).toFixed(1)}%)`);
     if (report.periodStart && report.periodEnd) {
@@ -36,7 +36,7 @@ export function generateTextReport(report: StatisticalReport): string {
     lines.push('');
 
     // 2. Age Analysis
-    lines.push('2. ANÁLISIS DEMOGRÁFICO - EDAD');
+    lines.push('2. ANÁLISIS DE ANTIGÜEDAD');
     lines.push('   ' + subDivider);
 
     if (report.ageStats) {
@@ -67,15 +67,15 @@ export function generateTextReport(report: StatisticalReport): string {
     lines.push('');
 
     // 3. Gender Analysis
-    lines.push('3. ANÁLISIS POR GÉNERO');
+    lines.push('3. ANÁLISIS POR CATEGORÍA');
     lines.push('   ' + subDivider);
     lines.push('   ┌──────────────────────────┬──────────┬──────────┐');
-    lines.push('   │ Género                   │ Casos    │ %        │');
+    lines.push('   │ Categoría                │ Cantidad │ %        │');
     lines.push('   ├──────────────────────────┼──────────┼──────────┤');
 
     const genders = [
-        { label: 'Masculino', count: report.genderDistribution.masculino },
-        { label: 'Femenino', count: report.genderDistribution.femenino },
+        { label: 'Tipo A', count: report.genderDistribution.masculino },
+        { label: 'Tipo B', count: report.genderDistribution.femenino },
         { label: 'No especificado', count: report.genderDistribution.noEspecificado },
     ];
 
@@ -90,10 +90,10 @@ export function generateTextReport(report: StatisticalReport): string {
     lines.push('');
 
     // 4. Top Professions
-    lines.push('4. TOP 10 PROFESIONES / OCUPACIONES MÁS AFECTADAS');
+    lines.push('4. TOP 10 SUBCATEGORÍAS / CLASIFICACIONES');
     lines.push('   ' + subDivider);
     lines.push('   ┌────┬──────────────────────────────┬──────────┬──────────┐');
-    lines.push('   │ #  │ Profesión / Ocupación        │ Casos    │ %        │');
+    lines.push('   │ #  │ Subcategoría / Tipo           │ Cantidad │ %        │');
     lines.push('   ├────┼──────────────────────────────┼──────────┼──────────┤');
 
     report.topProfessions.forEach((prof, index) => {
@@ -155,8 +155,8 @@ export function generateTextReport(report: StatisticalReport): string {
     // Footer
     lines.push(divider);
     lines.push('   Este informe fue generado automáticamente por el sistema');
-    lines.push('   NoMásSecuestros. Los datos presentados son de carácter');
-    lines.push('   informativo y deben ser verificados con fuentes oficiales.');
+    lines.push('   DataTracker - Gestión de Inventario. Los datos presentados');
+    lines.push('   corresponden al inventario registrado en el sistema.');
     lines.push(divider);
 
     return lines.join('\n');
@@ -195,7 +195,7 @@ export function generateCSVReport(report: StatisticalReport): string {
     }
 
     // Age groups
-    lines.push('DISTRIBUCIÓN POR EDAD');
+    lines.push('DISTRIBUCIÓN POR ANTIGÜEDAD');
     lines.push('Grupo,Casos,Porcentaje');
     for (const group of report.ageGroups) {
         lines.push(`${group.label},${group.count},${group.percentage.toFixed(1)}%`);
@@ -203,31 +203,31 @@ export function generateCSVReport(report: StatisticalReport): string {
     lines.push('');
 
     // Gender
-    lines.push('DISTRIBUCIÓN POR GÉNERO');
-    lines.push('Género,Casos,Porcentaje');
-    lines.push(`Masculino,${report.genderDistribution.masculino},${((report.genderDistribution.masculino / report.totalCases) * 100).toFixed(1)}%`);
-    lines.push(`Femenino,${report.genderDistribution.femenino},${((report.genderDistribution.femenino / report.totalCases) * 100).toFixed(1)}%`);
+    lines.push('DISTRIBUCIÓN POR CATEGORÍA');
+    lines.push('Categoría,Cantidad,Porcentaje');
+    lines.push(`Tipo A,${report.genderDistribution.masculino},${((report.genderDistribution.masculino / report.totalCases) * 100).toFixed(1)}%`);
+    lines.push(`Tipo B,${report.genderDistribution.femenino},${((report.genderDistribution.femenino / report.totalCases) * 100).toFixed(1)}%`);
     lines.push(`No especificado,${report.genderDistribution.noEspecificado},${((report.genderDistribution.noEspecificado / report.totalCases) * 100).toFixed(1)}%`);
     lines.push('');
 
     // Professions
-    lines.push('TOP PROFESIONES / OCUPACIONES');
-    lines.push('Profesión / Ocupación,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
+    lines.push('TOP SUBCATEGORÍAS / CLASIFICACIONES');
+    lines.push('Subcategoría / Tipo,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
     for (const prof of report.topProfessions) {
         lines.push(`"${prof.value}",${prof.fi},${prof.hi.toFixed(4)},${prof.pi.toFixed(2)}%,${prof.Fi}`);
     }
     lines.push('');
 
     // Locations
-    lines.push('TOP UBICACIONES DE DESAPARICIÓN');
-    lines.push('Ubicación,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
+    lines.push('TOP UBICACIONES DE ORIGEN');
+    lines.push('Ubicación de Origen,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
     for (const loc of report.topDisappearanceLocations) {
         lines.push(`"${loc.value}",${loc.fi},${loc.hi.toFixed(4)},${loc.pi.toFixed(2)}%,${loc.Fi}`);
     }
     lines.push('');
 
-    lines.push('TOP CENTROS DE CONFINAMIENTO');
-    lines.push('Centro de Confinamiento,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
+    lines.push('TOP UBICACIONES DE ALMACENAMIENTO');
+    lines.push('Almacén / Ubicación Actual,Frecuencia Absoluta,Frecuencia Relativa,Porcentaje,Frecuencia Acumulada');
     for (const loc of report.topConfinementLocations) {
         lines.push(`"${loc.value}",${loc.fi},${loc.hi.toFixed(4)},${loc.pi.toFixed(2)}%,${loc.Fi}`);
     }

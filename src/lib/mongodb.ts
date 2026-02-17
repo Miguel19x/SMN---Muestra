@@ -54,12 +54,14 @@ if (!global.mongoose) {
     global.mongoose = cached;
 }
 
-// ✅ Validar URI de MongoDB
-if (!process.env.MONGODB_URL) {
-    throw new Error('MONGODB_URL no está definido en las variables de entorno');
+// ✅ Validar URI de MongoDB (lazy - se evalúa al primer uso, no al importar el módulo)
+function getMongoURI(): string {
+    const uri = process.env.MONGODB_URL || import.meta.env.MONGODB_URL;
+    if (!uri) {
+        throw new Error('MONGODB_URL no está definido en las variables de entorno');
+    }
+    return uri;
 }
-
-const MONGODB_URI: string = process.env.MONGODB_URL;
 
 
 // ✅ Opciones optimizadas
@@ -224,7 +226,7 @@ export async function connectDB(): Promise<typeof mongoose> {
                 maxAttempts: MAX_RETRY_ATTEMPTS
             });
 
-            cached.promise = mongoose.connect(MONGODB_URI, MONGODB_OPTIONS);
+            cached.promise = mongoose.connect(getMongoURI(), MONGODB_OPTIONS);
             cached.conn = await cached.promise;
             cached.lastConnected = Date.now();
             cached.retryCount = 0;

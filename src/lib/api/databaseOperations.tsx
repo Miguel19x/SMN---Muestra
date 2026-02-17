@@ -1,7 +1,7 @@
-import type { DesaparecidoData } from '../../components/type/types'
+import type { ObjetoData } from '../../components/type/types'
 
-export async function updateDesaparecido(id: string, data: DesaparecidoData): Promise<void> {
-  const response = await fetch(`/api/desaparecidos/${id}`, {
+export async function updateObjeto(id: string, data: ObjetoData): Promise<void> {
+  const response = await fetch(`/api/inventario/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -13,8 +13,8 @@ export async function updateDesaparecido(id: string, data: DesaparecidoData): Pr
   }
 }
 
-export async function acceptDesaparecido(id: string): Promise<void> {
-  const response = await fetch(`/api/desaparecidos/${id}/accept`, {
+export async function acceptObjeto(id: string): Promise<void> {
+  const response = await fetch(`/api/inventario/${id}/accept`, {
     method: 'POST',
   })
 
@@ -24,9 +24,9 @@ export async function acceptDesaparecido(id: string): Promise<void> {
   }
 }
 
-export async function rejectDesaparecido(id: string): Promise<void> {
-  const response = await fetch(`/api/desaparecidos/${id}/reject`, {
-    method:  'POST',
+export async function rejectObjeto(id: string): Promise<void> {
+  const response = await fetch(`/api/inventario/${id}/reject`, {
+    method: 'POST',
   })
 
   if (!response.ok) {
@@ -35,18 +35,18 @@ export async function rejectDesaparecido(id: string): Promise<void> {
   }
 }
 
-export async function fetchDesaparecidoDetails(id: string): Promise<DesaparecidoData> {
-  const response = await fetch(`/api/desaparecidos/${id}`)
-  
+export async function fetchObjetoDetails(id: string): Promise<ObjetoData> {
+  const response = await fetch(`/api/inventario/${id}`)
+
   if (!response.ok) {
-    throw new Error('Failed to fetch desaparecido details')
+    throw new Error('Failed to fetch objeto details')
   }
 
   return response.json()
 }
 
-export async function createDesaparecido(data: DesaparecidoData): Promise<DesaparecidoData> {
-  const response = await fetch('/api/desaparecidos', {
+export async function createObjeto(data: ObjetoData): Promise<ObjetoData> {
+  const response = await fetch('/api/inventario', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -59,3 +59,10 @@ export async function createDesaparecido(data: DesaparecidoData): Promise<Desapa
 
   return response.json()
 }
+
+// ✅ Backward compatibility aliases
+export const updateDesaparecido = updateObjeto;
+export const acceptDesaparecido = acceptObjeto;
+export const rejectDesaparecido = rejectObjeto;
+export const fetchDesaparecidoDetails = fetchObjetoDetails;
+export const createDesaparecido = createObjeto;

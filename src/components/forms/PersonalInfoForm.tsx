@@ -8,39 +8,35 @@ import { useLanguage } from '../additionals/scripts/i18n'
 
 export default function PersonalInfoForm({ formData, errors, onChange }: InfoFormProps) {
   const { translate } = useLanguage();
-  const [cedulaInput, setCedulaInput] = useState(formData.cedula || '')
+  const [codigoInput, setCodigoInput] = useState(formData.codigo || '')
 
-  // ✅ Sync local state when formData.cedula changes (for form reset)
+  // ✅ Sync local state when formData.codigo changes (for form reset)
   useEffect(() => {
-    setCedulaInput(formData.cedula || '');
-  }, [formData.cedula]);
+    setCodigoInput(formData.codigo || '');
+  }, [formData.codigo]);
 
   useEffect(() => {
-    if (formData.extranjero === 'V') {
-      onChange('nacionalidad', 'Nacional')
-    } else if (formData.extranjero === 'E' && formData.nacionalidad === 'Nacional') {
-      onChange('nacionalidad', '')
+    if (formData.origen === 'N') {
+      onChange('pais_origen', 'Nacional')
+    } else if (formData.origen === 'I' && formData.pais_origen === 'Nacional') {
+      onChange('pais_origen', '')
     }
-  }, [formData.extranjero])
+  }, [formData.origen])
 
-  const handleCedulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\./g, '')
+  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value
 
-    if (formData.extranjero === 'V') {
-      value = value.replace(/\D/g, '')
-      if (value.length > 8) value = value.slice(0, 8)
-
-      value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    if (formData.origen === 'N') {
+      // National codes: alphanumeric with dashes
+      value = value.replace(/[^A-Za-z0-9\-]/g, '').toUpperCase()
+      if (value.length > 20) value = value.slice(0, 20)
+    } else {
+      // Imported codes: flexible format
+      value = value.replace(/[^A-Za-z0-9\-_.]/g, '')
     }
 
-    setCedulaInput(value)
-    onChange('cedula', value)
-  }
-
-  const handleCedulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (formData.extranjero === 'V' && e.key === '.') {
-      e.preventDefault()
-    }
+    setCodigoInput(value)
+    onChange('codigo', value)
   }
 
   return (
@@ -67,51 +63,51 @@ export default function PersonalInfoForm({ formData, errors, onChange }: InfoFor
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="cedula">{translate('Form-ID')}</Label>
+          <Label htmlFor="codigo">{translate('Form-ID')}</Label>
           <div className="flex">
             <NativeSelect
-              name="extranjero"
-              id="extranjero"
-              value={formData.extranjero}
-              onChange={(e) => onChange('extranjero', e.target.value)}
+              name="origen"
+              id="origen"
+              value={formData.origen}
+              onChange={(e) => onChange('origen', e.target.value)}
               className="w-[60px]"
             >
-              <option value="V">V</option>
-              <option value="E">E</option>
+              <option value="N">N</option>
+              <option value="I">I</option>
             </NativeSelect>
             <Input
               type="text"
-              name="cedula"
-              value={cedulaInput}
-              onChange={handleCedulaChange}
-              onKeyDown={handleCedulaKeyDown}
-              className={cn("flex-grow ml-2", errors.cedula && "border-red-500")}
-              aria-invalid={errors.cedula ? "true" : "false"}
-              aria-describedby="cedula-error"
+              name="codigo"
+              value={codigoInput}
+              onChange={handleCodigoChange}
+              className={cn("flex-grow ml-2", errors.codigo && "border-red-500")}
+              aria-invalid={errors.codigo ? "true" : "false"}
+              aria-describedby="codigo-error"
+              placeholder="ABC-12345"
             />
           </div>
-          {errors.cedula && (
-            <p id="cedula-error" className="text-red-500 text-sm mt-1" role="alert">
-              {errors.cedula}
+          {errors.codigo && (
+            <p id="codigo-error" className="text-red-500 text-sm mt-1" role="alert">
+              {errors.codigo}
             </p>
           )}
         </div>
         <div>
-          <Label htmlFor="nacionalidad">{translate('Form-N')}</Label>
+          <Label htmlFor="pais_origen">{translate('Form-N')}</Label>
           <Input
             type="text"
-            id="nacionalidad"
-            name="nacionalidad"
-            value={formData.nacionalidad || ''}
-            onChange={(e) => onChange('nacionalidad', e.target.value)}
-            className={cn(errors.nacionalidad && "border-red-500")}
-            aria-invalid={errors.nacionalidad ? "true" : "false"}
-            aria-describedby="nacionalidad-error"
-            disabled={formData.extranjero === 'V'}
+            id="pais_origen"
+            name="pais_origen"
+            value={formData.pais_origen || ''}
+            onChange={(e) => onChange('pais_origen', e.target.value)}
+            className={cn(errors.pais_origen && "border-red-500")}
+            aria-invalid={errors.pais_origen ? "true" : "false"}
+            aria-describedby="pais_origen-error"
+            disabled={formData.origen === 'N'}
           />
-          {errors.nacionalidad && (
-            <p id="nacionalidad-error" className="text-red-500 text-sm mt-1" role="alert">
-              {errors.nacionalidad}
+          {errors.pais_origen && (
+            <p id="pais_origen-error" className="text-red-500 text-sm mt-1" role="alert">
+              {errors.pais_origen}
             </p>
           )}
         </div>

@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '../additionals/scripts/i18n';
 import { sanitizeImageUrl } from '@/lib/sanitize';
 
-const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCondition, renderValue }) => {
+const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAntiguedadStage, getCondicionEstado, renderValue }) => {
   const { translate } = useLanguage();
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [removalReason, setRemovalReason] = useState('');
@@ -14,14 +14,14 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCo
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const { data: details, isLoading, error } = useQuery({
-    queryKey: ['desaparecido', item.id],
-    queryFn: () => fetch(`/api/desaparecidos/${item.id}`).then(res => res.json()),
-    enabled: !!item.id, // ✅ Solo fetch si tenemos un ID válido
+    queryKey: ['objeto', item.id],
+    queryFn: () => fetch(`/api/inventario/${item.id}`).then(res => res.json()),
+    enabled: !!item.id,
     staleTime: Infinity,
   });
 
   const removalMutation = useMutation({
-    mutationFn: async (data: { desaparecido_id: string; reason: string; evidence_url?: string }) => {
+    mutationFn: async (data: { objeto_id: string; reason: string; evidence_url?: string }) => {
       const response = await fetch('/api/removal-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +49,7 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCo
     if (!removalReason.trim()) return;
 
     removalMutation.mutate({
-      desaparecido_id: item.id || '',
+      objeto_id: item.id || '',
       reason: removalReason,
       evidence_url: evidenceUrl || undefined,
     });
@@ -85,8 +85,8 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCo
     );
   }
 
-  const ageStage = getAgeStage(details.edad);
-  const legalCondition = getLegalCondition(details.edad);
+  const antiguedadStage = getAntiguedadStage(details.antiguedad);
+  const condicionEstado = getCondicionEstado(details.antiguedad);
 
   return (
     <>
@@ -96,19 +96,19 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCo
             <h3 className="font-semibold mb-4 text-center">{translate('List-Info-Add')}</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <p><strong>{translate('List-Info-Gender')}</strong> {renderValue(details.sexo)} {ageStage && `(${ageStage})`}</p>
-                <p><strong>{translate('List-Info-Age')}</strong> {details.edad ? `${details.edad} ${translate('List-Info-Yo')}` : 'N/A'} ({legalCondition})</p>
-                <p><strong>{translate('List-Info-P')}</strong> {renderValue(details.profesion)}</p>
-                <p><strong>{translate('List-Info-N')}</strong> {renderValue(details.nacionalidad || (details.extranjero === 'V' ? translate('Form-NV') : 'N/A'))}</p>
-                <p><strong>{translate('List-Info-H')}</strong> {renderValue(details.condicion_de_salud)}</p>
-                <p><strong>{translate('List-Info-D')}</strong> {renderValue(details.discapacidad)}</p>
+                <p><strong>{translate('List-Info-Gender')}</strong> {renderValue(details.categoria)} {antiguedadStage && `(${antiguedadStage})`}</p>
+                <p><strong>{translate('List-Info-Age')}</strong> {details.antiguedad ? `${details.antiguedad} ${translate('List-Info-Yo')}` : 'N/A'} ({condicionEstado})</p>
+                <p><strong>{translate('List-Info-P')}</strong> {renderValue(details.tipo_objeto)}</p>
+                <p><strong>{translate('List-Info-N')}</strong> {renderValue(details.pais_origen || (details.origen === 'N' ? translate('Form-NV') : 'N/A'))}</p>
+                <p><strong>{translate('List-Info-H')}</strong> {renderValue(details.condicion)}</p>
+                <p><strong>{translate('List-Info-D')}</strong> {renderValue(details.estado_conservacion)}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>{translate('List-Info-PC')}</strong> {renderValue(details.lugar_de_confinamiento)}</p>
-                <p><strong>{translate('List-Info-Pd')}</strong> {renderValue(details.lugar_de_desaparicion)}</p>
-                <p><strong>{translate('List-Info-Dd')}</strong> {renderValue(details.fecha)}</p>
-                <p><strong>{translate('List-Info-Dt')}</strong> {details.hora ? `${details.hora}hs` : 'N/A'}</p>
-                <p><strong>{translate('List-Info-E')}</strong> {renderValue(details.etnia)}</p>
+                <p><strong>{translate('List-Info-PC')}</strong> {renderValue(details.ubicacion_actual)}</p>
+                <p><strong>{translate('List-Info-Pd')}</strong> {renderValue(details.ultimo_lugar_conocido)}</p>
+                <p><strong>{translate('List-Info-Dd')}</strong> {renderValue(details.fecha_registro)}</p>
+                <p><strong>{translate('List-Info-Dt')}</strong> {details.hora_registro ? `${details.hora_registro}hs` : 'N/A'}</p>
+                <p><strong>{translate('List-Info-E')}</strong> {renderValue(details.clasificacion)}</p>
               </div>
               <div className="flex flex-col justify-center items-center space-y-2">
                 <p><strong>{translate('List-Info-I')}:</strong></p>
@@ -219,4 +219,3 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAgeStage, getLegalCo
 };
 
 export default React.memo(ExpandedRow);
-

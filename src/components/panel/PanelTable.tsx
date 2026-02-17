@@ -8,7 +8,7 @@ import { ChevronDown, ChevronUp, Edit, Check, X, Save, Trash2 } from 'lucide-rea
 import { updateDesaparecido } from '../../lib/api/databaseOperations'
 import { useFormValidation } from '../forms/validation'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { PanelTableProps, DesaparecidoData, ErrorState } from '../type/types'
+import type { PanelTableProps, ObjetoData, ErrorState } from '../type/types'
 import { useTranslation } from '../additionals/scripts/i18n'
 
 const ExpandedRowPanel = React.lazy(() => import('./ExpandedRowPanel'))
@@ -23,8 +23,8 @@ const estadosVenezuela = [
 export default function PanelTable({
   data,
   renderValue,
-  getAgeStage,
-  getLegalCondition,
+  getAntiguedadStage,
+  getCondicionEstado,
   refetch,
   onAccept,
   onReject,
@@ -32,9 +32,9 @@ export default function PanelTable({
 }: PanelTableProps) {
   const { t } = useTranslation();
   const { validateForm } = useFormValidation();
-  const [localData, setLocalData] = useState<DesaparecidoData[]>(data)
+  const [localData, setLocalData] = useState<ObjetoData[]>(data)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editedData, setEditedData] = useState<DesaparecidoData | null>(null)
+  const [editedData, setEditedData] = useState<ObjetoData | null>(null)
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [errors, setErrors] = useState<ErrorState>({})
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
@@ -44,7 +44,7 @@ export default function PanelTable({
     setLocalData(data)
   }, [data])
 
-  const handleEdit = useCallback((item: DesaparecidoData) => {
+  const handleEdit = useCallback((item: ObjetoData) => {
     if (item.id) {
       setEditingId(item.id)
       setEditedData(item)
@@ -68,15 +68,15 @@ export default function PanelTable({
     }
 
     try {
-      const dataToUpdate: Partial<DesaparecidoData> = { ...editedData }
+      const dataToUpdate: Partial<ObjetoData> = { ...editedData }
 
-      if (dataToUpdate.cedula === '') {
-        delete dataToUpdate.cedula
+      if (dataToUpdate.codigo === '') {
+        delete dataToUpdate.codigo
       }
 
-      dataToUpdate.extranjero = dataToUpdate.extranjero || 'V'
+      dataToUpdate.origen = dataToUpdate.origen || 'N'
 
-      await updateDesaparecido(editedData._id, { ...dataToUpdate, extranjero: dataToUpdate.extranjero || 'V' } as DesaparecidoData)
+      await updateDesaparecido(editedData._id, { ...dataToUpdate, origen: dataToUpdate.origen || 'N' } as ObjetoData)
 
       // Delete images from R2 after successful update
       for (const imageUrl of imagesToDelete) {
@@ -138,28 +138,28 @@ export default function PanelTable({
     })
 
     if (name === 'nombre') {
-      const newErrors = validateForm({ ...editedData, [name]: value } as DesaparecidoData)
+      const newErrors = validateForm({ ...editedData, [name]: value } as ObjetoData)
       setErrors(prev => ({ ...prev, nombre: newErrors.nombre || '' }))
     }
   }, [editedData, validateForm])
 
-  const handleSelectChange = useCallback((name: keyof DesaparecidoData, value: string) => {
+  const handleSelectChange = useCallback((name: keyof ObjetoData, value: string) => {
     setEditedData(prev => {
       if (!prev) return null
       const updatedData = {
         ...prev,
         [name]: value,
-        ...(name === 'extranjero' ? { nacionalidad: value === 'V' ? t('Form-NV') : '' } : {})
+        ...(name === 'origen' ? { pais_origen: value === 'N' ? t('Form-NV') : '' } : {})
       }
       return updatedData
     })
   }, [t])
 
-  const handleRemoveCedula = useCallback(() => {
+  const handleRemoveCodigo = useCallback(() => {
     setEditedData(prev => {
       if (!prev) return null
-      const { cedula, ...rest } = prev
-      return rest
+      const { codigo, ...rest } = prev
+      return rest as ObjetoData
     })
   }, [])
 
@@ -169,17 +169,17 @@ export default function PanelTable({
     }
   }
 
-  const renderEditableField = (item: DesaparecidoData, name: keyof DesaparecidoData, value: string | undefined) => {
+  const renderEditableField = (item: ObjetoData, name: keyof ObjetoData, value: string | undefined) => {
     if (editingId === item.id) {
-      if (name === 'extranjero') {
+      if (name === 'origen') {
         return (
           <Select name={name} onValueChange={(value) => handleSelectChange(name, value)} value={editedData?.[name] as string}>
             <SelectTrigger className="w-[50px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="V">V</SelectItem>
-              <SelectItem value="E">E</SelectItem>
+              <SelectItem value="N">N</SelectItem>
+              <SelectItem value="I">I</SelectItem>
             </SelectContent>
           </Select>
         )
@@ -196,7 +196,7 @@ export default function PanelTable({
             </SelectContent>
           </Select>
         )
-      } else if (name === 'cedula') {
+      } else if (name === 'codigo') {
         return (
           <div className="flex items-center space-x-2">
             <Input
@@ -209,10 +209,10 @@ export default function PanelTable({
             <Button
               onClick={(e) => {
                 e.stopPropagation()
-                handleRemoveCedula()
+                handleRemoveCodigo()
               }}
               className="bg-red-500 hover:bg-red-600 text-white p-2"
-              title="Eliminar cédula"
+              title="Eliminar código"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -252,16 +252,14 @@ export default function PanelTable({
         </TableHeader>
         <TableBody>
           {filteredData.map((item, index) => {
-            // Generate the key
-            const key = (item.id && typeof item.id === 'string' && item.id.trim() !== '') 
-              ? item.id 
+            const key = (item.id && typeof item.id === 'string' && item.id.trim() !== '')
+              ? item.id
               : `row-fallback-${index}`;
-            
-            // Debug: log if key is empty or suspicious
+
             if (key === '' || key === null || key === undefined) {
               console.error('CRITICAL: Generated empty/null key at index:', index, 'item:', item);
             }
-            
+
             return (
               <React.Fragment key={key}>
                 <motion.tr
@@ -282,8 +280,8 @@ export default function PanelTable({
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center space-x-2">
-                      {renderEditableField(item, 'extranjero', item.extranjero)}
-                      {renderEditableField(item, 'cedula', item.cedula)}
+                      {renderEditableField(item, 'origen', item.origen)}
+                      {renderEditableField(item, 'codigo', item.codigo)}
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
@@ -368,8 +366,8 @@ export default function PanelTable({
                           <React.Suspense fallback={<div className="p-4 text-center dark:text-gray-200">{t('Process2')}</div>}>
                             <ExpandedRowPanel
                               item={item}
-                              getAgeStage={getAgeStage}
-                              getLegalCondition={getLegalCondition}
+                              getAntiguedadStage={getAntiguedadStage}
+                              getCondicionEstado={getCondicionEstado}
                               renderValue={renderValue}
                               refetch={refetch}
                               isEditing={editingId === item.id}

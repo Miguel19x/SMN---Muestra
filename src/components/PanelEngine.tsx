@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SearchBar from './search/SearchBar'
 import SearchFieldSelector from './search/searchFieldSelector'
 import PanelTable from './panel/PanelTable'
-import { getAgeStage, getLegalCondition, renderValue, formatCedula } from './search/utils'
+import { getAntiguedadStage, getCondicionEstado, renderValue, formatCodigo } from './search/utils'
 import ErrorBoundary from './search/ErrorBoundary'
 import useFetchData from './search/hook/useFetchData'
 import { useFilteredData } from './search/hook/useFilteredData'
@@ -30,16 +30,16 @@ function PanelEngineContent({ initialSearchTerm = '', focusSearchInput = false }
   const { toast } = useToast()
 
   const {
-    data: allPendingDesaparecidos,
+    data: allPendingObjetos,
     isLoading,
     isError,
     refetch,
   } = useFetchData('pendiente')
 
-  const filteredDesaparecidos = useFilteredData(allPendingDesaparecidos, searchTerm, searchField)
+  const filteredObjetos = useFilteredData(allPendingObjetos, searchTerm, searchField)
 
-  const totalPages = Math.ceil((filteredDesaparecidos?.length || 0) / itemsPerPage)
-  const paginatedDesaparecidos = filteredDesaparecidos?.slice(
+  const totalPages = Math.ceil((filteredObjetos?.length || 0) / itemsPerPage)
+  const paginatedObjetos = filteredObjetos?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   ) || []
@@ -142,7 +142,7 @@ function PanelEngineContent({ initialSearchTerm = '', focusSearchInput = false }
             <div className="text-red-500 text-center">
               {t('Error')}
             </div>
-          ) : filteredDesaparecidos && filteredDesaparecidos.length > 0 ? (
+          ) : filteredObjetos && filteredObjetos.length > 0 ? (
             <div>
               <div className="flex justify-center mb-4 gap-2">
                 <Button
@@ -174,11 +174,11 @@ function PanelEngineContent({ initialSearchTerm = '', focusSearchInput = false }
                 />
                 <div className="overflow-x-auto mt-6">
                   <PanelTable
-                    data={paginatedDesaparecidos}
+                    data={paginatedObjetos}
                     renderValue={renderValue}
-                    formatCedula={formatCedula}
-                    getAgeStage={getAgeStage}
-                    getLegalCondition={getLegalCondition}
+                    formatCodigo={formatCodigo}
+                    getAntiguedadStage={getAntiguedadStage}
+                    getCondicionEstado={getCondicionEstado}
                     refetch={refetch}
                     onAccept={handleAccept}
                     onReject={handleReject}

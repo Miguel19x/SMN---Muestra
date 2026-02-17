@@ -161,7 +161,7 @@ export function generateProfessionalPDF(report: StatisticalReport, t: Translator
         doc.text(`${i} / ${pageCount}`, 195, 270, { align: 'right' });
     }
 
-    doc.save(`Reporte_NoMasSecuestros_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Reporte_DataTracker_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
 // ============================================

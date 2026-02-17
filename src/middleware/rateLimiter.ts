@@ -9,14 +9,14 @@ const ratelimit = new Ratelimit({
   prefix: '@upstash/ratelimit',
 })
 
-const WHITELIST = ['upstash.com', 'images.nomassecuestros.com']
+const WHITELIST = ['upstash.com', 'images.datatracker.com']
 
 function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for')
   if (forwardedFor) {
     return forwardedFor.split(',')[0].trim()
   }
-  
+
   const realIp = request.headers.get('x-real-ip')
   if (realIp) {
     return realIp
@@ -27,7 +27,7 @@ function getClientIp(request: Request): string {
 
 export async function rateLimit(request: Request) {
   const ip = getClientIp(request)
-  
+
   if (WHITELIST.some(domain => ip.includes(domain))) {
     return { success: true }
   }

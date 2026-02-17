@@ -73,8 +73,8 @@ export interface StatisticalReport {
     topProfessions: FrequencyItem[];
 
     // Segregated locations
-    topDisappearanceLocations: FrequencyItem[];  // Lugar de desaparición
-    topConfinementLocations: FrequencyItem[];     // Lugar de confinamiento
+    topDisappearanceLocations: FrequencyItem[];  // Ubicación de origen
+    topConfinementLocations: FrequencyItem[];     // Ubicación actual de almacenamiento
     monthlyTrend: { month: string; count: number }[];
 
     // Conclusions
@@ -237,7 +237,7 @@ function calculateSubgroupPercentage(data: DesaparecidoData[], filterFn: (d: Des
 }
 
 /**
- * Detects significant temporal spikes or drops
+ * Detects significant temporal spikes or drops in inventory registration
  */
 function analyzeTemporalTrends(monthlyTrend: { month: string; count: number }[]): string | null {
     if (monthlyTrend.length < 4) return null;
@@ -252,26 +252,22 @@ function analyzeTemporalTrends(monthlyTrend: { month: string; count: number }[])
 
     const change = ((avgRecent - avgPrevious) / avgPrevious) * 100;
 
-    if (change > 50) return `Alerta de escalada: Se ha detectado un incremento del ${change.toFixed(1)}% en el promedio de detenciones del último trimestre respecto al anterior, lo que sugiere un recrudecimiento sistemático de la persecución.`;
-    if (change < -50) return `Se observa una disminución del ${Math.abs(change).toFixed(1)}% en el registro de casos recientes, lo cual requiere verificación para determinar si obedece a un cese real de hostilidades o a un "apagón informativo" por temor a denunciar.`;
+    if (change > 50) return `Alerta de crecimiento acelerado: Se ha detectado un incremento del ${change.toFixed(1)}% en el promedio de registros del último trimestre respecto al anterior. Este crecimiento acelerado del inventario requiere una revisión de la capacidad de almacenamiento y los procesos logísticos para garantizar una gestión eficiente.`;
+    if (change < -50) return `Desaceleración significativa: Se observa una disminución del ${Math.abs(change).toFixed(1)}% en el flujo de registros recientes. Esto podría indicar una estabilización del inventario, una reducción en las adquisiciones, o posibles demoras en los procesos de registro que deben ser verificadas.`;
 
     return null;
 }
 
 /**
- * Identify most vulnerable demographic intersection
+ * Identify the most prevalent category concentration in inventory
  */
-function identifyVulnerableGroup(data: DesaparecidoData[]): string | null {
-    const youngMales = calculateSubgroupPercentage(data, d => {
-        const ag = d.edad;
-        const sx = normalizeGender(d.sexo);
-        return (ag !== undefined && ag >= 18 && ag <= 35 && sx === 'M');
-    });
+function identifyCategoryConcentration(data: DesaparecidoData[]): string | null {
+    const typeA = calculateSubgroupPercentage(data, d => d.categoria === 'Tipo A');
+    const typeB = calculateSubgroupPercentage(data, d => d.categoria === 'Tipo B');
 
-    if (youngMales > 40) return `El perfil demográfico predominante corresponde a hombres jóvenes (18-35 años), quienes representan el ${youngMales.toFixed(1)}% del total. Esto sugiere un patrón de neutralización de la fuerza social productiva y de protesta activa.`;
-
-    const women = calculateSubgroupPercentage(data, d => normalizeGender(d.sexo) === 'F');
-    if (women > 30) return `La alta incidencia de registros femeninos (${women.toFixed(1)}%) evidencia una distribución transversal en la base de datos, afectando diversos segmentos demográficos.`;
+    if (typeA > 70) return `La categoría Tipo A domina el inventario con un ${typeA.toFixed(1)}% del total, lo que sugiere una concentración excesiva que podría afectar la diversificación del catálogo y la resiliencia operativa ante cambios en la demanda.`;
+    if (typeB > 70) return `La categoría Tipo B domina el inventario con un ${typeB.toFixed(1)}% del total. Se recomienda evaluar si esta concentración obedece a una estrategia deliberada o a una deficiencia en la captación de otros tipos de artículos.`;
+    if (Math.abs(typeA - typeB) < 10) return `El inventario presenta una distribución equilibrada entre Tipo A (${typeA.toFixed(1)}%) y Tipo B (${typeB.toFixed(1)}%), lo que indica una buena diversificación por categoría.`;
 
     return null;
 }
@@ -281,81 +277,82 @@ function identifyVulnerableGroup(data: DesaparecidoData[]): string | null {
 // ============================================
 
 /**
- * Generate automatic, rigorous conclusions based on data analysis
- * Context: Political prisoners / Presos políticos en Venezuela
+ * Generate automatic, rigorous conclusions based on inventory data analysis
+ * Context: Object/inventory management system in Venezuela
  */
 export function generateConclusions(report: Omit<StatisticalReport, 'conclusions'>, rawData: DesaparecidoData[] = []): string[] {
     const conclusions: string[] = [];
 
-    // 1. MACRO ANALYSIS (The "Big Picture")
-    // 1. MACRO ANALYSIS (The "Big Picture")
+    // 1. EXECUTIVE SUMMARY
     const formatDateSpan = (d: string) => {
         const date = new Date(d);
         return date.toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
     };
-    conclusions.push(`Universo de estudio: El presente informe se sustenta en el análisis de ${report.totalCases} registros documentados${report.periodStart ? ` desde el ${formatDateSpan(report.periodStart)}` : ''}. La magnitud de la muestra permite inferir patrones sistemáticos y no aislados.`);
+    conclusions.push(`Resumen del inventario: El presente informe analiza ${report.totalCases} objetos registrados en el sistema${report.periodStart ? ` desde el ${formatDateSpan(report.periodStart)}` : ''}${report.periodEnd ? ` hasta el ${formatDateSpan(report.periodEnd)}` : ''}. El volumen de datos permite identificar patrones operativos significativos para la optimización de la gestión.`);
 
-    // 2. DEMOGRAPHIC IMPACT & VULNERABILITY
-    const vulnerabilityFinding = identifyVulnerableGroup(rawData);
-    if (vulnerabilityFinding) {
-        conclusions.push(`Perfil de la víctima: ${vulnerabilityFinding}`);
+    // 2. CATEGORY DISTRIBUTION ANALYSIS
+    const categoryFinding = identifyCategoryConcentration(rawData);
+    if (categoryFinding) {
+        conclusions.push(`Distribución por categoría: ${categoryFinding}`);
     }
 
-    // Minors Analysis - High Rigor
-    const minorsGroup = report.ageGroups.find(g => g.label.includes('Menores'));
-    if (minorsGroup && minorsGroup.percentage > 0) {
-        const severity = minorsGroup.count > 10 ? "Crímenes de lesa humanidad" : "Violación grave";
-        conclusions.push(`${severity}: Se han documentado ${minorsGroup.count} casos de niños y adolescentes detenidos (representando el ${minorsGroup.percentage.toFixed(1)}% del total). La privación de libertad de menores en contextos políticos contraviene taxativamente el interés superior del niño (Convención sobre los Derechos del Niño) y agrava la responsabilidad penal del Estado.`);
+    // 3. ITEM AGE / CONDITION ANALYSIS
+    const newItemsGroup = report.ageGroups.find(g => g.label.includes('Nuevos'));
+    const oldItemsGroup = report.ageGroups.find(g => g.label.includes('Antiguos'));
+    if (newItemsGroup && oldItemsGroup) {
+        if (oldItemsGroup.percentage > 40) {
+            conclusions.push(`Envejecimiento del inventario: El ${oldItemsGroup.percentage.toFixed(1)}% de los objetos registrados supera los 10 años de antigüedad (${oldItemsGroup.count} artículos). Se recomienda una auditoría de obsolescencia y un plan de renovación para mantener la calidad y operatividad del inventario.`);
+        } else if (newItemsGroup.percentage > 60) {
+            conclusions.push(`Inventario renovado: El ${newItemsGroup.percentage.toFixed(1)}% de los artículos tiene menos de 2 años de antigüedad, lo que refleja una política activa de adquisiciones recientes y un inventario en buen estado operativo.`);
+        }
     }
 
-    // 3. TARGETED PERSECUTION (Professions)
+    // 4. TOP SUBCATEGORIES / CLASSIFICATION ANALYSIS
     if (report.topProfessions.length > 0) {
-        const topProf = report.topProfessions[0];
-        const studentProf = report.topProfessions.find(p => p.value.includes('Estudiante'));
-        const securityProf = report.topProfessions.find(p => p.value.includes('Militar') || p.value.includes('Policía') || p.value.includes('Seguridad'));
+        const topSubcat = report.topProfessions[0];
+        let subcatText = `Clasificación predominante: La subcategoría "${topSubcat.value}" concentra el ${topSubcat.pi.toFixed(1)}% del inventario total.`;
 
-        let persecutionText = `Sectores objetivo: El análisis de profesión / ocupación revela una focalización sistemática en el sector ${topProf.value} (${topProf.pi.toFixed(1)}%).`;
-
-        if (studentProf && studentProf.pi > 10 && topProf.value !== studentProf.value) {
-            persecutionText += ` Asimismo, la persecución contra estudiantes (${studentProf.pi.toFixed(1)}%) busca desarticular el activismo juvenil y la protesta universitaria.`;
-        } else if (studentProf && topProf.value === studentProf.value) {
-            persecutionText += ` Esta concentración evidencia una estrategia dirigida a desarticular grupos específicos de la sociedad civil, más allá de detenciones aleatorias.`;
+        if (report.topProfessions.length >= 3) {
+            const top3 = report.topProfessions.slice(0, 3);
+            const top3Pct = top3.reduce((sum, p) => sum + p.pi, 0);
+            subcatText += ` Las tres subcategorías principales (${top3.map(p => p.value).join(', ')}) representan conjuntamente el ${top3Pct.toFixed(1)}% del inventario.`;
+            if (top3Pct > 75) {
+                subcatText += ` Esta alta concentración indica una especialización marcada que podría ser una ventaja competitiva o un riesgo de dependencia.`;
+            }
         }
-        if (securityProf && securityProf.pi > 5) {
-            persecutionText += ` Es notable la purga interna dentro de las fuerzas de seguridad (${securityProf.pi.toFixed(1)}%), indicativo de fracturas en la lealtad institucional.`;
-        }
-        conclusions.push(persecutionText);
+        conclusions.push(subcatText);
     }
 
-    // 4. GEOGRAPHIC PATTERNS & CENTRALIZATION
+    // 5. GEOGRAPHIC DISTRIBUTION / WAREHOUSE CONCENTRATION
     if (report.topConfinementLocations.length > 0) {
         const topLoc = report.topConfinementLocations[0];
         const concentrationIndex = topLoc.pi;
 
-        if (concentrationIndex > 20) {
-            conclusions.push(`Centralización de la represión: Existe una marcada concentración del ${concentrationIndex.toFixed(1)}% de los detenidos en ${topLoc.value}. Esto demuestra una política de traslado de detenidos desde sus jurisdicciones naturales hacia centros de control centralizado, dificultando la defensa jurídica y el contacto familiar (violación de las Reglas Mandela).`);
-        } else {
-            conclusions.push(`Dispersión penitenciaria: La distribución de los detenidos en múltiples centros de reclusión sugiere una estrategia de dispersión para evitar la consolidación de grupos de resistencia carcelaria y dificultar el monitoreo unificado de DDHH.`);
+        if (concentrationIndex > 30) {
+            conclusions.push(`Concentración de almacenamiento: El ${concentrationIndex.toFixed(1)}% del inventario se encuentra en ${topLoc.value}. Esta alta centralización puede representar un riesgo logístico significativo. Se recomienda evaluar una estrategia de distribución para reducir la vulnerabilidad ante eventualidades locales.`);
+        } else if (report.topConfinementLocations.length >= 5) {
+            conclusions.push(`Distribución geográfica saludable: El inventario se encuentra distribuido en múltiples ubicaciones, con ${topLoc.value} como sede principal (${concentrationIndex.toFixed(1)}%). Esta dispersión reduce riesgos y facilita la logística de distribución regional.`);
         }
     }
 
-    // 5. TEMPORAL DYNAMICS
+    // 6. TEMPORAL DYNAMICS
     const trendAnalysis = analyzeTemporalTrends(report.monthlyTrend);
     if (trendAnalysis) {
         conclusions.push(trendAnalysis);
     }
 
-    // 6. EVIDENTIARY QUALITY (Meta-analysis)
+    // 7. DATA QUALITY ASSESSMENT
     const photoPct = (report.casesWithPhoto / report.totalCases) * 100;
     const completenessPct = (report.casesWithCompleteData / report.totalCases) * 100;
 
     if (photoPct < 50 || completenessPct < 50) {
-        conclusions.push(`Opacidad de datos: Solo el ${completenessPct.toFixed(1)}% de los casos cuenta con ficha técnica completa y el ${photoPct.toFixed(1)}% con evidencia fotográfica. Esta precariedad documental es consustancial a la política de desaparición forzada temporal y ocultamiento de información por parte de los órganos de seguridad.`);
+        conclusions.push(`Calidad de datos: Solo el ${completenessPct.toFixed(1)}% de los registros cuenta con ficha técnica completa y el ${photoPct.toFixed(1)}% con imagen asociada. Se recomienda implementar validaciones más estrictas en el proceso de registro y campañas de actualización de datos para mejorar la trazabilidad del inventario.`);
+    } else {
+        conclusions.push(`Calidad de datos: El ${completenessPct.toFixed(1)}% de los registros cuenta con ficha completa y el ${photoPct.toFixed(1)}% incluye imagen. Estos indicadores reflejan un proceso de registro robusto y confiable.`);
     }
 
-    // 7. FINAL VERDICT
-    // 7. FINAL VERDICT
-    conclusions.push(`Dictamen final: La transversalidad de la represión (edad, género, ocupación) y la sistematicidad de los patrones aquí expuestos, confirman que no se trata de excesos policiales aislados, sino de una política de Estado que podría constituir Crimen de Lesa Humanidad según el Artículo 7 del Estatuto de Roma.`);
+    // 8. OPERATIONAL RECOMMENDATIONS
+    conclusions.push(`Recomendaciones operativas: Con base en los patrones identificados en este análisis de ${report.totalCases} objetos, se sugiere: (1) revisar periódicamente la distribución por categoría para mantener un balance óptimo, (2) monitorear las tendencias temporales de registro para anticipar picos de demanda, y (3) fortalecer los procesos de documentación fotográfica para garantizar la trazabilidad completa del inventario.`);
 
     return conclusions;
 }
@@ -584,11 +581,11 @@ export function generateStatisticalReport(data: DesaparecidoData[]): Statistical
     // General stats
     const totalCases = data.length;
     const casesWithPhoto = data.filter(d => d.imagen && d.imagen.length > 0).length;
-    const casesWithCompleteData = data.filter(d => d.nombre && d.edad && d.sexo).length;
+    const casesWithCompleteData = data.filter(d => d.nombre && d.antiguedad && d.categoria).length;
 
     // Period
     const dates = data
-        .map(d => d.fecha)
+        .map(d => d.fecha_registro)
         .filter((f): f is string => f !== undefined && f !== null && f.length > 0)
         .sort();
     const periodStart: string | null = dates.length > 0 ? dates[0] : null;
@@ -596,51 +593,53 @@ export function generateStatisticalReport(data: DesaparecidoData[]): Statistical
 
     // Age statistics
     const ages = data
-        .map(d => d.edad)
+        .map(d => d.antiguedad)
         .filter((age): age is number => age !== undefined && age !== null && age > 0 && age <= 120);
     const ageStats = calculateDescriptiveStats(ages);
 
-    // Age groups
-    const minors = data.filter(d => d.edad !== undefined && d.edad < 18).length;
-    const adults = data.filter(d => d.edad !== undefined && d.edad >= 18 && d.edad < 65).length;
-    const seniors = data.filter(d => d.edad !== undefined && d.edad >= 65).length;
-    const ageUnknown = data.filter(d => d.edad === undefined || d.edad === null).length;
+    // Item age groups (antigüedad en años)
+    const newItems = data.filter(d => d.antiguedad !== undefined && d.antiguedad < 2).length;
+    const recentItems = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 2 && d.antiguedad < 5).length;
+    const standardItems = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 5 && d.antiguedad < 10).length;
+    const oldItems = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 10).length;
+    const ageUnknown = data.filter(d => d.antiguedad === undefined || d.antiguedad === null).length;
 
     const ageGroups: AgeGroup[] = [
-        { label: 'Menores de 18', count: minors, percentage: (minors / totalCases) * 100 },
-        { label: 'Adultos (18-64)', count: adults, percentage: (adults / totalCases) * 100 },
-        { label: 'Mayores de 65', count: seniors, percentage: (seniors / totalCases) * 100 },
-        { label: 'Edad no especificada', count: ageUnknown, percentage: (ageUnknown / totalCases) * 100 },
+        { label: 'Nuevos (< 2 años)', count: newItems, percentage: (newItems / totalCases) * 100 },
+        { label: 'Recientes (2-4 años)', count: recentItems, percentage: (recentItems / totalCases) * 100 },
+        { label: 'Estándar (5-9 años)', count: standardItems, percentage: (standardItems / totalCases) * 100 },
+        { label: 'Antiguos (10+ años)', count: oldItems, percentage: (oldItems / totalCases) * 100 },
+        { label: 'Antigüedad no especificada', count: ageUnknown, percentage: (ageUnknown / totalCases) * 100 },
     ];
 
-    // Gender distribution (Robust & Normalized)
-    const genders = data.map(d => normalizeGender(d.sexo));
-    const masculino = genders.filter(g => g === 'M').length;
-    const femenino = genders.filter(g => g === 'F').length;
+    // Category distribution (replaces gender)
+    const categories = data.map(d => d.categoria || 'No especificado');
+    const tipoA = categories.filter(c => c === 'Tipo A').length;
+    const tipoB = categories.filter(c => c === 'Tipo B').length;
 
     const genderDistribution: GenderDistribution = {
-        masculino,
-        femenino,
-        noEspecificado: totalCases - masculino - femenino,
+        masculino: tipoA,
+        femenino: tipoB,
+        noEspecificado: totalCases - tipoA - tipoB,
         total: totalCases,
     };
 
     // Top professions
     const professions = data
-        .filter(d => d.profesion && d.profesion.trim())
-        .map(d => categorizarProfesion(d.profesion!));
+        .filter(d => d.tipo_objeto && d.tipo_objeto.trim())
+        .map(d => categorizarProfesion(d.tipo_objeto!));
     const topProfessions = buildFrequencyTable(professions).slice(0, 10);
 
     // Nationality distribution
-    const nationalities = data.map(d => normalizeNationality(d.nacionalidad));
+    const nationalities = data.map(d => normalizeNationality(d.pais_origen));
     const nacional = nationalities.filter(n => n === 'Nacional').length;
     const noEspecificada = nationalities.filter(n => n === 'No especificada').length;
     const extranjera = totalCases - nacional - noEspecificada;
 
     // Build frequency table for foreign nationalities only
     const foreignNationalities = data
-        .filter(d => d.nacionalidad && normalizeNationality(d.nacionalidad) !== 'Nacional' && normalizeNationality(d.nacionalidad) !== 'No especificada')
-        .map(d => normalizeNationality(d.nacionalidad));
+        .filter(d => d.pais_origen && normalizeNationality(d.pais_origen) !== 'Nacional' && normalizeNationality(d.pais_origen) !== 'No especificada')
+        .map(d => normalizeNationality(d.pais_origen));
 
     const nationalityDistribution: NationalityDistribution = {
         nacional,
@@ -650,13 +649,13 @@ export function generateStatisticalReport(data: DesaparecidoData[]): Statistical
         topForeignNationalities: buildFrequencyTable(foreignNationalities).slice(0, 5),
     };
 
-    // SEGREGATED LOCATIONS: Disappearance vs. Confinement
+    // SEGREGATED LOCATIONS: Último Lugar Conocido vs. Ubicación Actual
 
-    // 1. Lugares de Desaparición
+    // 1. Último Lugar Conocido
     const disappearanceLocations = data
-        .filter(d => d.lugar_de_desaparicion && d.lugar_de_desaparicion.trim())
+        .filter(d => d.ultimo_lugar_conocido && d.ultimo_lugar_conocido.trim())
         .map(d => {
-            const lugar = d.lugar_de_desaparicion!;
+            const lugar = d.ultimo_lugar_conocido!;
             const parts = lugar.split(',');
             const baseLugar = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
             return normalizeLocation(baseLugar);
@@ -664,11 +663,11 @@ export function generateStatisticalReport(data: DesaparecidoData[]): Statistical
         .filter(l => l && l.length > 0);
     const topDisappearanceLocations = buildFrequencyTable(disappearanceLocations).slice(0, 10);
 
-    // 2. Lugares de Confinamiento
+    // 2. Ubicación Actual
     const confinementLocations = data
-        .filter(d => d.lugar_de_confinamiento && d.lugar_de_confinamiento.trim())
+        .filter(d => d.ubicacion_actual && d.ubicacion_actual.trim())
         .map(d => {
-            const lugar = d.lugar_de_confinamiento!;
+            const lugar = d.ubicacion_actual!;
             const parts = lugar.split(',');
             const baseLugar = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
             return normalizeLocation(baseLugar);
@@ -681,8 +680,8 @@ export function generateStatisticalReport(data: DesaparecidoData[]): Statistical
     const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     data.forEach(d => {
-        if (d.fecha) {
-            const parts = d.fecha.split('-');
+        if (d.fecha_registro) {
+            const parts = d.fecha_registro.split('-');
             if (parts.length >= 2) {
                 const key = `${parts[0]}-${parts[1]}`;
                 monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);

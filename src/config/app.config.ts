@@ -126,7 +126,7 @@ export const CACHE_CONFIG = {
         USER_SESSION: 86400,         // 24 horas
     },
     KEYS: {
-        DESAPARECIDOS: (estado: string) => `desaparecidos:${estado}`,
+        DESAPARECIDOS: (estado: string) => `objetos:${estado}`,
         STATS: () => 'stats:global',
         RATE_LIMIT: (ip: string, endpoint: string) => `ratelimit:${endpoint}:${ip}`,
     },
@@ -202,7 +202,7 @@ export const SECURITY_CONFIG = {
         SCRIPT_SRC: ["'self'", "'unsafe-inline'", "https://challenges.cloudflare.com"],
         STYLE_SRC: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         FONT_SRC: ["'self'", "https://fonts.gstatic.com"],
-        IMG_SRC: ["'self'", "data:", "blob:", "https://*.cloudflare.com", "https://images.nomassecuestros.com"],
+        IMG_SRC: ["'self'", "data:", "blob:", "https://*.cloudflare.com", "https://images.datatracker.com"],
         CONNECT_SRC: ["'self'", "https://*.upstash.io", "https://*.cloudflare.com"],
         FRAME_SRC: ["https://challenges.cloudflare.com"],
         FRAME_ANCESTORS: ["'none'"],

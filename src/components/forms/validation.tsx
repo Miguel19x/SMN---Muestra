@@ -1,38 +1,21 @@
 import { useTranslation } from '../additionals/scripts/i18n';
-import type { DesaparecidoData, ErrorState, TranslationKey } from '../type/types';
+import type { ObjetoData, ErrorState, TranslationKey } from '../type/types';
 
 type ValidationFunction = (value: string, t: (key: TranslationKey) => string) => string;
 
 export const validateNombre: ValidationFunction = (value, translate) => {
-  if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s.]+$/.test(value)) {
+  if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ0-9\s.\-]+$/.test(value)) {
     return translate('Validation-Name1')
   }
-  const words = value.trim().split(/\s+/)
-  if (words.length < 2) return translate('Validation-Name2')
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i]
-    if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ]\.$/.test(word)) {
-      continue
-    }
-    if ((i === 0 || i === words.length - 1) && word.length < 3) {
-      return i === 0 ? translate('Validation-Name3') : translate('Validation-Name4')
-    }
-    if (word.length < 3) {
-      return translate('Validation-Name5')
-    }
-  }
+  if (value.trim().length < 2) return translate('Validation-Name2')
   return ""
 }
 
-export const validateCedula = (value: string, extranjero: 'V' | 'E', translate: (key: TranslationKey) => string): string => {
+export const validateCodigo = (value: string, origen: 'N' | 'I', translate: (key: TranslationKey) => string): string => {
   if (value.length === 0) return ""
-  if (extranjero === 'V') {
-    const numericValue = value.replace(/\./g, '');
-    if (!/^\d+$/.test(numericValue)) {
+  if (origen === 'N') {
+    if (!/^[A-Za-z0-9\-]+$/.test(value)) {
       return translate('Validation-ID1')
-    }
-    if (parseInt(numericValue) > 60000000) {
-      return translate('Validation-ID2')
     }
   } else {
     if (!/^[A-Za-z0-9\-_.]+$/.test(value)) {
@@ -42,7 +25,7 @@ export const validateCedula = (value: string, extranjero: 'V' | 'E', translate: 
   return ""
 }
 
-export const validateNacionalidad: ValidationFunction = (value, translate) => {
+export const validatePaisOrigen: ValidationFunction = (value, translate) => {
   if (value.length === 0) return ""
   if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
     return translate('Validation-N1')
@@ -51,21 +34,21 @@ export const validateNacionalidad: ValidationFunction = (value, translate) => {
   return ""
 }
 
-export const validateEdad: ValidationFunction = (value, translate) => {
+export const validateAntiguedad: ValidationFunction = (value, translate) => {
   if (value.length === 0) return ""
   if (!/^\d+$/.test(value)) return translate('Validation-A1')
   const age = parseInt(value, 10)
   if (age < 0) return translate('Validation-A2')
-  if (age > 125) return translate('Validation-A3')
+  if (age > 200) return translate('Validation-A3')
   return ""
 }
 
 export const validateTextField = (name: string, value: string, translate: (key: TranslationKey) => string): string => {
   if (value.length === 0) return ""
-  if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s.-]+$/.test(value)) {
+  if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ0-9\s.\-,]+$/.test(value)) {
     return `${name.charAt(0).toUpperCase() + name.slice(1)} ${translate('Validation-Text1')}`
   }
-  if (value.length < 3) return `${name.charAt(0).toUpperCase() + name.slice(1)} ${translate('Validation-Text2')}`
+  if (value.length < 2) return `${name.charAt(0).toUpperCase() + name.slice(1)} ${translate('Validation-Text2')}`
   return ""
 }
 
@@ -80,16 +63,15 @@ import { useCallback } from 'react';
 export function useFormValidation() {
   const { t, lang, forceUpdate } = useTranslation();
 
-  const validateForm = useCallback((formData: DesaparecidoData): ErrorState => {
+  const validateForm = useCallback((formData: ObjetoData): ErrorState => {
     const errors: ErrorState = {}
 
     errors.nombre = validateNombre(formData.nombre, t)
-    errors.cedula = validateCedula(formData.cedula ?? '', formData.extranjero, t)
-    if (formData.edad !== undefined) errors.edad = validateEdad(formData.edad.toString(), t)
-    if (formData.nacionalidad) errors.nacionalidad = formData.extranjero === 'E' ? validateNacionalidad(formData.nacionalidad, t) : ""
-    if (formData.profesion) errors.profesion = validateTextField(`${t('Form-P')}`, formData.profesion, t)
-    if (formData.etnia) errors.etnia = validateTextField(`${t('Form-E')}`, formData.etnia, t)
-    if (formData.hora) errors.hora = validateHora(formData.hora, t)
+    errors.codigo = validateCodigo(formData.codigo ?? '', formData.origen, t)
+    if (formData.antiguedad !== undefined) errors.antiguedad = validateAntiguedad(formData.antiguedad.toString(), t)
+    if (formData.pais_origen) errors.pais_origen = formData.origen === 'I' ? validatePaisOrigen(formData.pais_origen, t) : ""
+    if (formData.tipo_objeto) errors.tipo_objeto = validateTextField(`${t('Form-P')}`, formData.tipo_objeto, t)
+    if (formData.hora_registro) errors.hora_registro = validateHora(formData.hora_registro, t)
 
     return Object.fromEntries(Object.entries(errors).filter(([_, value]) => value !== ""))
   }, [t]);

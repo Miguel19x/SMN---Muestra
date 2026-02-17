@@ -4,32 +4,32 @@ import { Button } from "@/components/ui/button"
 import PersonalInfoForm from './forms/PersonalInfoForm'
 import AdditionalInfoForm from './forms/AdditionalInfoForm'
 import ImageUpload from './forms/ImageUpload'
-import type { DesaparecidoData, ErrorState } from './type/types'
+import type { ObjetoData, ErrorState } from './type/types'
 import { useFormValidation } from './forms/validation'
 import { LanguageProvider, useTranslation } from './additionals/scripts/i18n';
 
 function UploadEngineContent() {
   const { t: translate, lang, forceUpdate } = useTranslation();
   const { validateForm } = useFormValidation();
-  const [formData, setFormData] = useState<DesaparecidoData>({
-    extranjero: 'V',
-    cedula: '',
+  const [formData, setFormData] = useState<ObjetoData>({
+    origen: 'N',
+    codigo: '',
     nombre: '',
-    nacionalidad: 'Nacional',
+    pais_origen: 'Nacional',
     estado_registro: 'pendiente',
     etiqueta: 'blue',
     imagen: '',
     estado: '',
-    sexo: 'Masculino',
-    edad: undefined,
-    fecha: '',
-    hora: '',
-    profesion: '',
-    etnia: '',
-    condicion_de_salud: '',
-    discapacidad: '',
-    lugar_de_confinamiento: '',
-    lugar_de_desaparicion: '',
+    categoria: '',
+    antiguedad: undefined,
+    fecha_registro: '',
+    hora_registro: '',
+    tipo_objeto: '',
+    clasificacion: '',
+    condicion: '',
+    estado_conservacion: '',
+    ubicacion_actual: '',
+    ultimo_lugar_conocido: '',
   })
   const [errors, setErrors] = useState<ErrorState>({})
   const [isFormValid, setIsFormValid] = useState(false)
@@ -43,8 +43,8 @@ function UploadEngineContent() {
   const handleChange = useCallback((name: string, value: any) => {
     setFormData(prev => {
       const newData = { ...prev, [name]: value }
-      if (name === 'extranjero') {
-        newData.nacionalidad = value === 'V' ? 'Nacional' : ''
+      if (name === 'origen') {
+        newData.pais_origen = value === 'N' ? 'Nacional' : ''
       }
       return newData
     })
@@ -120,7 +120,7 @@ function UploadEngineContent() {
         captchaToken,
       }
 
-      const response = await fetch('/api/desaparecidos', {
+      const response = await fetch('/api/inventario', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,24 +139,24 @@ function UploadEngineContent() {
       toast({ title: "Éxito", description: result.message || "Información subida correctamente" })
       // ✅ Reset ALL form fields
       setFormData({
-        extranjero: 'V',
-        cedula: '',
+        origen: 'N',
+        codigo: '',
         nombre: '',
-        nacionalidad: 'Nacional',
+        pais_origen: 'Nacional',
         etiqueta: 'blue',
         estado_registro: 'pendiente',
         imagen: '',
         estado: '',
-        sexo: 'Masculino',
-        edad: undefined,
-        fecha: '',
-        hora: '',
-        profesion: '',
-        etnia: '',
-        condicion_de_salud: '',
-        discapacidad: '',
-        lugar_de_confinamiento: '',
-        lugar_de_desaparicion: '',
+        categoria: '',
+        antiguedad: undefined,
+        fecha_registro: '',
+        hora_registro: '',
+        tipo_objeto: '',
+        clasificacion: '',
+        condicion: '',
+        estado_conservacion: '',
+        ubicacion_actual: '',
+        ultimo_lugar_conocido: '',
       })
       setErrors({})
       setResetImage(prev => !prev)

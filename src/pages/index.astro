@@ -11,11 +11,11 @@ import "@/styles/globals.css";
 	<div class="min-h-screen flex flex-col theme-transition">
 		<main class="flex-grow">
 			<Header />
+			<InfoSection />
 			<!-- Motor de búsqueda: crítico, carga inmediata -->
 			<MotorDeBusqueda client:load />
 			<!-- Feature Showcase: no crítico, carga cuando el navegador esté inactivo -->
 			<FeatureShowcase client:idle />
-			<InfoSection />
 		</main>
 	</div>
 </Layout>

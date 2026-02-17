@@ -191,7 +191,7 @@ describe('CreateDesaparecidoSchema', () => {
             profesion: 'Ingeniero',
             etnia: 'Mestizo',
             lugar_de_desaparicion: 'Caracas',
-            imagen: 'https://images.nomassecuestros.com/test.jpg',
+            imagen: 'https://images.datatracker.com/test.jpg',
         };
 
         const result = CreateDesaparecidoSchema.safeParse(dataWithOptionals);

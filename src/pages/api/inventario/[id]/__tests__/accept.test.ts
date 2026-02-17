@@ -1,11 +1,11 @@
 /**
- * Integration Tests - Reject API
+ * Integration Tests - Accept API
  * 
- * Tests para POST /api/desaparecidos/[id]/reject
+ * Tests para POST /api/inventario/[id]/accept
  * - Autenticación requerida
- * - Eliminación de registro
- * - Eliminación imagen R2
+ * - Validación ObjectId
  * - Cache invalidation
+ * - Estado actualizado
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -21,15 +21,14 @@ const mockRedis = {
 const mockDesaparecido = {
     _id: '507f1f77bcf86cd799439011',
     nombre: 'Test Person',
-    imagen: 'test-image.jpg',
     estado_registro: 'pendiente',
+    etiqueta: 'blue',
+    save: vi.fn().mockResolvedValue(true),
 };
 
 const mockDesaparecidoModel = {
-    findByIdAndDelete: vi.fn().mockResolvedValue(mockDesaparecido),
+    findById: vi.fn().mockResolvedValue(mockDesaparecido),
 };
-
-const mockDeleteImageFromR2 = vi.fn().mockResolvedValue(true);
 
 // Mock modules
 vi.mock('@/lib/redis', () => ({
@@ -44,26 +43,37 @@ vi.mock('@/lib/mongodb', () => ({
     connectDB: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock('@/lib/r2-client', () => ({
-    deleteImageFromR2: mockDeleteImageFromR2,
-}));
-
-describe('POST /api/desaparecidos/[id]/reject', () => {
+describe('POST /api/inventario/[id]/accept', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockDesaparecido.estado_registro = 'pendiente';
+        mockDesaparecido.etiqueta = 'blue';
     });
 
     describe('Authentication', () => {
         it('should reject unauthenticated requests', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
-                locals: {},
+                locals: {}, // No user
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            // Import dynamically to avoid top-level await issues
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             const response = await POST(context);
 
             expect(response.status).toBe(401);
+        });
+
+        it('should allow authenticated admin requests', async () => {
+            const context = createMockContext({
+                params: { id: '507f1f77bcf86cd799439011' },
+                locals: { user: { role: 'admin' } },
+            });
+
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
+            const response = await POST(context);
+
+            expect(response.status).toBe(200);
         });
     });
 
@@ -74,108 +84,93 @@ describe('POST /api/desaparecidos/[id]/reject', () => {
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             const response = await POST(context);
 
             expect(response.status).toBe(400);
         });
 
         it('should return 404 for non-existent record', async () => {
-            mockDesaparecidoModel.findByIdAndDelete.mockResolvedValueOnce(null);
+            mockDesaparecidoModel.findById.mockResolvedValueOnce(null);
 
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             const response = await POST(context);
 
             expect(response.status).toBe(404);
         });
     });
 
-    describe('Deletion Logic', () => {
-        it('should delete record from database', async () => {
+    describe('Business Logic', () => {
+        it('should update estado_registro to aprobado', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             await POST(context);
 
-            expect(mockDesaparecidoModel.findByIdAndDelete).toHaveBeenCalledWith(
-                '507f1f77bcf86cd799439011'
-            );
+            expect(mockDesaparecido.estado_registro).toBe('aprobado');
         });
 
-        it('should delete image from R2 if present', async () => {
+        it('should remove etiqueta field', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             await POST(context);
 
-            expect(mockDeleteImageFromR2).toHaveBeenCalledWith('test-image.jpg');
+            expect(mockDesaparecido.etiqueta).toBeUndefined();
         });
 
-        it('should handle records without images', async () => {
-            mockDesaparecidoModel.findByIdAndDelete.mockResolvedValueOnce({
-                ...mockDesaparecido,
-                imagen: null,
-            });
-
+        it('should call save() on the document', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
-            const response = await POST(context);
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
+            await POST(context);
 
-            expect(response.status).toBe(200);
-            expect(mockDeleteImageFromR2).not.toHaveBeenCalled();
+            expect(mockDesaparecido.save).toHaveBeenCalled();
         });
     });
 
     describe('Cache Invalidation', () => {
-        it('should invalidate all estado caches', async () => {
+        it('should invalidate pendiente cache', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
             await POST(context);
 
             expect(mockRedis.del).toHaveBeenCalledWith('desaparecidos:pendiente');
-            expect(mockRedis.del).toHaveBeenCalledWith('desaparecidos:aprobado');
-            expect(mockRedis.del).toHaveBeenCalledWith('desaparecidos:rechazado');
         });
-    });
 
-    describe('Error Handling', () => {
-        it('should handle R2 deletion errors gracefully', async () => {
-            mockDeleteImageFromR2.mockRejectedValueOnce(new Error('R2 error'));
-
+        it('should invalidate aprobado cache', async () => {
             const context = createMockContext({
                 params: { id: '507f1f77bcf86cd799439011' },
                 locals: { user: { role: 'admin' } },
             });
 
-            const { POST } = await import('@/pages/api/desaparecidos/[id]/reject');
-            const response = await POST(context);
+            const { POST } = await import('@/pages/api/inventario/[id]/accept');
+            await POST(context);
 
-            // Should still succeed even if R2 deletion fails
-            expect(response.status).toBe(200);
+            expect(mockRedis.del).toHaveBeenCalledWith('desaparecidos:aprobado');
         });
     });
 });
 
-// Helper
+// Helper to create mock Astro context
 function createMockContext(overrides: Partial<APIContext> = {}): APIContext {
     return {
         params: {},

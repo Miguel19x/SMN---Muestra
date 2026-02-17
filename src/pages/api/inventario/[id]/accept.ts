@@ -13,17 +13,17 @@
 import type { APIRoute } from 'astro';
 import { connectDB } from '../../../../lib/mongodb';
 import { CustomError } from '../../../../lib/CustomError';
-import { Desaparecido } from '../../../../models/desaparecido';
+import { Objeto } from '../../../../models/objeto';
 import { verifyAuth, createUnauthorizedResponse } from '../../../../lib/auth/auth-middleware';
 import { secureJsonResponse } from '../../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../../validators/schemas';
-import { DesaparecidoService } from '../../../../services/desaparecido.service';
+import { ObjetoService } from '../../../../services/objeto.service';
 import redis from '../../../../lib/redis';
 
-const desaparecidoService = new DesaparecidoService();
+const objetoService = new ObjetoService();
 
 /**
- * POST /api/desaparecidos/[id]/accept
+ * POST /api/inventario/[id]/accept
  * Aprobar un registro de desaparecido (requiere autenticación)
  */
 export const POST: APIRoute = async ({ params, request }) => {
@@ -57,24 +57,24 @@ export const POST: APIRoute = async ({ params, request }) => {
         }
 
         // ✅ Buscar y actualizar usando MongoDB ObjectId
-        const desaparecido = await Desaparecido.findById(mongoId);
-        if (!desaparecido) {
+        const objeto = await Objeto.findById(mongoId);
+        if (!objeto) {
             return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
         }
 
         // ✅ Actualizar estado
-        desaparecido.estado_registro = 'aprobado';
-        desaparecido.etiqueta = undefined; // Eliminar etiqueta pendiente
-        await desaparecido.save();
+        objeto.estado_registro = 'aprobado';
+        objeto.etiqueta = undefined;
+        await objeto.save();
 
         // ✅ Invalidar caches relevantes
         await Promise.all([
-            redis.del('desaparecidos:pendiente'),
-            redis.del('desaparecidos:aprobado'),
+            redis.del('objetos:pendiente'),
+            redis.del('objetos:aprobado'),
         ]);
 
         // ✅ Logging estructurado (sin PII)
-        console.log('Desaparecido approved', {
+        console.log('Objeto approved', {
             id: id.substring(0, 8) + '...',
             timestamp: new Date().toISOString(),
         });
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ params, request }) => {
         );
 
     } catch (error) {
-        console.error('POST /api/desaparecidos/[id]/accept failed', {
+        console.error('POST /api/inventario/[id]/accept failed', {
             error: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString(),
         });

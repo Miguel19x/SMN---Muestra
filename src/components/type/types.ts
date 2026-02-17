@@ -2,30 +2,33 @@ import type { ReactNode } from "react";
 import es from '../additionals/i18n/es.json';
 import en from '../additionals/i18n/en.json';
 
-export type DesaparecidoData = {
-  // ✅ REFACTORIZACIÓN: Usar 'id' público en vez de '_id'
-  // 'id' es un identificador ofuscado (HMAC-based) que previene
-  // exposición de MongoDB ObjectIds internos
+export type ObjetoData = {
+  // ✅ 'id' es un identificador ofuscado (HMAC-based)
   id?: string;
-  extranjero: 'V' | 'E';
-  cedula?: string;
+  // Internal MongoDB ID (used only in admin panel)
+  _id?: string;
+  origen: 'N' | 'I'; // Nacional / Importado
+  codigo?: string; // Serial number / identification code
   nombre: string;
-  estado?: string;
-  sexo?: 'Masculino' | 'Femenino';
-  edad?: number;
-  nacionalidad?: string;
-  profesion?: string;
-  condicion_de_salud?: string;
-  discapacidad?: string;
-  lugar_de_confinamiento?: string;
-  lugar_de_desaparicion?: string;
-  fecha?: string;
-  hora?: string;
-  etnia?: string;
+  estado?: string; // Venezuelan state (location)
+  categoria?: string; // Tipo A, Tipo B, etc.
+  antiguedad?: number; // Age in years
+  pais_origen?: string; // Country of origin (when imported)
+  tipo_objeto?: string; // Object type
+  condicion?: string; // General condition
+  estado_conservacion?: string; // Conservation state
+  clasificacion?: string; // Classification (Clase A, B, C, D)
+  ubicacion_actual?: string; // Current storage location
+  ultimo_lugar_conocido?: string; // Last known location
+  fecha_registro?: string;
+  hora_registro?: string;
   imagen?: string;
   estado_registro: 'pendiente' | 'aprobado';
   etiqueta: 'blue' | 'green';
 }
+
+// ✅ Backward compatibility alias
+export type DesaparecidoData = ObjetoData;
 
 export type ErrorState = {
   [key: string]: string;
@@ -39,7 +42,7 @@ export interface SearchEngineProps {
 }
 
 export type InfoFormProps = {
-  formData: DesaparecidoData;
+  formData: ObjetoData;
   errors: ErrorState;
   onChange: FormChangeHandler;
 }
@@ -48,18 +51,21 @@ export type ImageUploadProps = {
   onChange: FormChangeHandler;
 }
 
-export interface DesaparecidosTableProps {
-  data: DesaparecidoData[];
+export interface ObjetosTableProps {
+  data: ObjetoData[];
   renderValue: (value: any) => string;
-  formatCedula: (item: DesaparecidoData) => string;
-  getAgeStage: (edad?: number) => string;
-  getLegalCondition: (edad?: number) => string;
+  formatCodigo: (item: ObjetoData) => string;
+  getAntiguedadStage: (antiguedad?: number) => string;
+  getCondicionEstado: (antiguedad?: number) => string;
 }
 
+// ✅ Backward compatibility alias
+export type DesaparecidosTableProps = ObjetosTableProps;
+
 export interface ExpandedRowProps {
-  item: DesaparecidoData;
-  getAgeStage: (edad?: number) => string;
-  getLegalCondition: (edad?: number) => string;
+  item: ObjetoData;
+  getAntiguedadStage: (antiguedad?: number) => string;
+  getCondicionEstado: (antiguedad?: number) => string;
   renderValue: (value: any) => string;
 }
 
@@ -83,11 +89,11 @@ export interface SearchFieldSelectorProps {
 }
 
 export interface PanelTableProps {
-  data: DesaparecidoData[]
+  data: ObjetoData[]
   renderValue: (value: string | undefined) => React.ReactNode
-  formatCedula: (item: DesaparecidoData) => string
-  getAgeStage: (age: number | undefined) => string
-  getLegalCondition: (age: number | undefined) => string
+  formatCodigo: (item: ObjetoData) => string
+  getAntiguedadStage: (age: number | undefined) => string
+  getCondicionEstado: (age: number | undefined) => string
   refetch: () => void
   onAccept: (id: string) => void
   onReject: (id: string) => void
@@ -95,13 +101,13 @@ export interface PanelTableProps {
 }
 
 export type ExpandedRowPanelProps = {
-  item: DesaparecidoData;
-  getAgeStage: (age: number) => string;
-  getLegalCondition: (age: number) => string;
+  item: ObjetoData;
+  getAntiguedadStage: (age: number) => string;
+  getCondicionEstado: (age: number) => string;
   renderValue: (value: string | undefined) => React.ReactNode;
   refetch: () => void;
   isEditing: boolean;
-  editedData: DesaparecidoData | null;
+  editedData: ObjetoData | null;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   errors: ErrorState;
   setErrors: React.Dispatch<React.SetStateAction<ErrorState>>;

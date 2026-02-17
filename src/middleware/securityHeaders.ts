@@ -36,7 +36,7 @@ export function getSecurityHeaders(): SecurityHeaders {
             "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: blob: https://*.cloudflare.com https://images.nomassecuestros.com",
+            "img-src 'self' data: blob: https://*.cloudflare.com https://images.datatracker.com",
             "connect-src 'self' https://*.upstash.io https://*.cloudflare.com",
             "frame-src https://challenges.cloudflare.com",
             "frame-ancestors 'none'",

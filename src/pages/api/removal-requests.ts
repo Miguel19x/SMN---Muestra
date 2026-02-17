@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { Types } from 'mongoose';
 import { connectDB } from '../../lib/mongodb';
 import { RemovalRequest } from '../../models/removal-request';
-import { Desaparecido } from '../../models/desaparecido';
+import { Objeto } from '../../models/objeto';
 import { verifyAuth, createUnauthorizedResponse } from '../../lib/auth/auth-middleware';
 import { secureJsonResponse } from '../../middleware/securityHeaders';
 import { rateLimit } from '../../middleware/rateLimiter';

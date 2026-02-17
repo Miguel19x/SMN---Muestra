@@ -8,25 +8,25 @@
  * - Previene data leaks (no expone campos internos)
  */
 
-import type { ValidSexo, ValidExtranjero, ValidEstado, ValidEtiqueta } from '../config/app.config';
+import type { ValidEstado, ValidEtiqueta } from '../config/app.config';
 
 /**
- * ✅ DTO para crear desaparecido
+ * ✅ DTO para crear objeto
  */
-export interface CreateDesaparecidoDTO {
+export interface CreateObjetoDTO {
     nombre: string;
-    cedula: string;
-    edad: number;
-    sexo: ValidSexo;
-    extranjero: ValidExtranjero;
-    nacionalidad?: string;
-    profesion?: string;
-    etnia?: string;
-    condicion_de_salud?: string;
-    discapacidad?: string;
-    lugar_de_confinamiento?: string;
-    lugar_de_desaparicion?: string;
-    fecha: string; // ISO date string
+    codigo: string;
+    antiguedad: number;
+    categoria: string;
+    origen: string;
+    pais_origen?: string;
+    tipo_objeto?: string;
+    clasificacion?: string;
+    condicion?: string;
+    estado_conservacion?: string;
+    ubicacion_actual?: string;
+    ultimo_lugar_conocido?: string;
+    fecha_registro: string; // ISO date string
     imagen?: string; // URL
     captchaToken?: string;
     'cf-turnstile-response'?: string;
@@ -36,22 +36,22 @@ export interface CreateDesaparecidoDTO {
  * ✅ DTO de respuesta de desaparecido
  * CRÍTICO: NO incluye _id interno de MongoDB
  */
-export interface DesaparecidoResponseDTO {
+export interface ObjetoResponseDTO {
     id: string;  // ✅ ID público (no MongoDB _id)
     nombre: string;
-    cedula: string;
-    edad: number;
-    sexo: string;
-    nacionalidad: string;
-    profesion?: string;
-    etnia?: string;
-    fecha: string;
+    codigo: string;
+    antiguedad: number;
+    categoria: string;
+    pais_origen: string;
+    tipo_objeto?: string;
+    clasificacion?: string;
+    fecha_registro: string;
     imagen?: string;
     estado_registro: ValidEstado;
     etiqueta: ValidEtiqueta;
     // Campos calculados
-    ageStage: string;
-    legalCondition: string;
+    antiguedadStage: string;
+    condicionEstado: string;
     createdAt?: string;  // ISO timestamp
 }
 
@@ -59,7 +59,7 @@ export interface DesaparecidoResponseDTO {
  * ✅ DTO para crear solicitud de retiro
  */
 export interface CreateRemovalRequestDTO {
-    desaparecido_id: string;  // Public ID
+    objeto_id: string;  // Public ID
     reason: string;
     evidence_url?: string;
     requester_email?: string;
@@ -74,10 +74,10 @@ export interface CreateRemovalRequestDTO {
  */
 export interface RemovalRequestResponseDTO {
     id: string;  // Public ID
-    desaparecido?: {
+    objeto?: {
         id: string;
         nombre: string;
-        cedula: string;
+        codigo: string;
         imagen?: string;
     };
     requester: {
@@ -139,12 +139,12 @@ export interface StatsResponseDTO {
         rechazado: number;
     };
     byAge: {
-        menores: number;
-        mayores: number;
+        nuevos: number;
+        antiguos: number;
     };
-    bySexo: {
-        masculino: number;
-        femenino: number;
+    byCategoria: {
+        tipoA: number;
+        tipoB: number;
     };
     updatedAt: string;  // ISO timestamp
 }
@@ -197,13 +197,13 @@ export interface HealthCheckResponseDTO {
 /**
  * ✅ Type guards para runtime checks
  */
-export function isValidDesaparecidoResponse(obj: any): obj is DesaparecidoResponseDTO {
+export function isValidObjetoResponse(obj: any): obj is ObjetoResponseDTO {
     return (
         typeof obj === 'object' &&
         typeof obj.id === 'string' &&
         typeof obj.nombre === 'string' &&
-        typeof obj.cedula === 'string' &&
-        typeof obj.edad === 'number'
+        typeof obj.codigo === 'string' &&
+        typeof obj.antiguedad === 'number'
     );
 }
 

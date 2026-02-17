@@ -14,7 +14,7 @@ import type { APIRoute } from 'astro';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { connectDB } from '../../../../lib/mongodb';
 import { CustomError } from '../../../../lib/CustomError';
-import { Desaparecido } from '../../../../models/desaparecido';
+import { Objeto } from '../../../../models/objeto';
 import { r2Client, bucketName, extractFilenameFromUrl, ensureR2Available } from '../../../../lib/r2-client';
 import { verifyAuth, createUnauthorizedResponse } from '../../../../lib/auth/auth-middleware';
 import { secureJsonResponse } from '../../../../middleware/securityHeaders';
@@ -63,7 +63,7 @@ async function deleteImageFromR2(imageUrl: string): Promise<void> {
 }
 
 /**
- * POST /api/desaparecidos/[id]/reject
+ * POST /api/inventario/[id]/reject
  * Rechazar y eliminar un registro de desaparecido (requiere autenticación)
  */
 export const POST: APIRoute = async ({ params, request }) => {
@@ -97,27 +97,27 @@ export const POST: APIRoute = async ({ params, request }) => {
         }
 
         // ✅ Eliminar registro usando MongoDB ObjectId
-        const deletedDesaparecido = await Desaparecido.findByIdAndDelete(mongoId);
-        if (!deletedDesaparecido) {
+        const deletedObjeto = await Objeto.findByIdAndDelete(mongoId);
+        if (!deletedObjeto) {
             return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
         }
 
         // ✅ Eliminar imagen asociada de R2 (si existe)
-        if (deletedDesaparecido.imagen) {
-            await deleteImageFromR2(deletedDesaparecido.imagen);
+        if (deletedObjeto.imagen) {
+            await deleteImageFromR2(deletedObjeto.imagen);
         }
 
         // ✅ Invalidar todos los caches
         await Promise.all([
-            redis.del('desaparecidos:pendiente'),
-            redis.del('desaparecidos:aprobado'),
-            redis.del('desaparecidos:rechazado'),
+            redis.del('objetos:pendiente'),
+            redis.del('objetos:aprobado'),
+            redis.del('objetos:rechazado'),
         ]);
 
         // ✅ Logging estructurado (sin PII)
-        console.log('Desaparecido rejected and deleted', {
+        console.log('Objeto rejected and deleted', {
             id: id.substring(0, 8) + '...',
-            hadImage: !!deletedDesaparecido.imagen,
+            hadImage: !!deletedObjeto.imagen,
             timestamp: new Date().toISOString(),
         });
 
@@ -130,7 +130,7 @@ export const POST: APIRoute = async ({ params, request }) => {
         );
 
     } catch (error) {
-        console.error('POST /api/desaparecidos/[id]/reject failed', {
+        console.error('POST /api/inventario/[id]/reject failed', {
             error: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString(),
         });

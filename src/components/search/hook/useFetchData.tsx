@@ -4,14 +4,14 @@ import type { DesaparecidoData } from '../../type/types';
 
 function useFetchData(estado_registro: 'pendiente' | 'aprobado' = 'aprobado') {
   const fetchData = useCallback(async () => {
-    const url = `/api/desaparecidos?estado_registro=${estado_registro}`;
+    const url = `/api/inventario?estado_registro=${estado_registro}`;
 
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error('Failed to fetch data');
     }
     const data = await response.json();
-    return data.desaparecidos;
+    return data.objetos;
   }, [estado_registro]);
 
   const {
@@ -20,7 +20,7 @@ function useFetchData(estado_registro: 'pendiente' | 'aprobado' = 'aprobado') {
     isError,
     refetch,
   } = useQuery<DesaparecidoData[]>({
-    queryKey: ['desaparecidos', estado_registro],
+    queryKey: ['objetos', estado_registro],
     queryFn: fetchData,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

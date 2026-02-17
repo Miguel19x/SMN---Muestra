@@ -1,19 +1,19 @@
 /**
- * 🔧 MongoDB Schema con Índices Optimizados
+ * 🔧 MongoDB Schema - Object Inventory
  * 
- * ✅ Restaurado a estructura original con todos los campos
- * ✅ Manteniendo índices optimizados
+ * ✅ Campos renombrados para sistema de inventario de objetos
+ * ✅ Nota: El nombre de colección MongoDB se mantiene como 'Desaparecido' por compatibilidad
  */
 
 import mongoose from 'mongoose';
 
-const DesaparecidoSchema = new mongoose.Schema({
-    extranjero: {
+const ObjetoSchema = new mongoose.Schema({
+    origen: {
         type: String,
-        enum: ['V', 'E'],
+        enum: ['N', 'I'], // Nacional / Importado
         required: false,
     },
-    cedula: {
+    codigo: {
         type: String,
         required: false,
     },
@@ -25,44 +25,47 @@ const DesaparecidoSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
-    sexo: {
+    categoria: {
         type: String,
-        enum: ['Masculino', 'Femenino'],
         required: false,
     },
-    edad: {
+    antiguedad: {
         type: Number,
         required: false,
     },
-    nacionalidad: {
+    pais_origen: {
         type: String,
         required: false,
     },
-    profesion: {
+    tipo_objeto: {
         type: String,
         required: false,
     },
-    condicion_de_salud: {
+    condicion: {
         type: String,
         required: false,
     },
-    discapacidad: {
+    estado_conservacion: {
         type: String,
         required: false,
     },
-    lugar_de_confinamiento: {
+    clasificacion: {
         type: String,
         required: false,
     },
-    lugar_de_desaparicion: {
+    ubicacion_actual: {
         type: String,
         required: false,
     },
-    fecha: {
+    ultimo_lugar_conocido: {
         type: String,
         required: false,
     },
-    hora: {
+    fecha_registro: {
+        type: String,
+        required: false,
+    },
+    hora_registro: {
         type: String,
         required: false,
         validate: {
@@ -71,10 +74,6 @@ const DesaparecidoSchema = new mongoose.Schema({
             },
             message: props => `${props.value} no es una hora válida en formato 24:00hs (hh:mm)!`
         }
-    },
-    etnia: {
-        type: String,
-        required: false,
     },
     imagen: {
         type: String,
@@ -92,24 +91,22 @@ const DesaparecidoSchema = new mongoose.Schema({
         required: true,
     }
 }, {
-    timestamps: true, // createdAt, updatedAt
-    strict: false, // ✅ Permitir campos no definidos en el schema
+    timestamps: true,
+    strict: false,
 });
 
-// ✅ Índices optimizados para queries frecuentes
-DesaparecidoSchema.index({ estado_registro: 1 });
-DesaparecidoSchema.index({ nombre: 'text' });
-DesaparecidoSchema.index({ cedula: 1 });
-DesaparecidoSchema.index({ fecha: -1 });
-DesaparecidoSchema.index({ etiqueta: 1 });
+// ✅ Índices optimizados
+ObjetoSchema.index({ estado_registro: 1 });
+ObjetoSchema.index({ nombre: 'text' });
+ObjetoSchema.index({ codigo: 1 });
+ObjetoSchema.index({ fecha_registro: -1 });
+ObjetoSchema.index({ etiqueta: 1 });
+ObjetoSchema.index({ estado_registro: 1, fecha_registro: -1 });
+ObjetoSchema.index({ ultimo_lugar_conocido: 1 });
 
-// ✅ Índice compuesto para query común
-// Optimiza: find({ estado_registro }).sort({ fecha: -1 })
-DesaparecidoSchema.index({ estado_registro: 1, fecha: -1 });
+// ✅ Exportar modelo - usa colección 'Desaparecido' para compatibilidad con DB existente
+export const Objeto = mongoose.models.Desaparecido ||
+    mongoose.model('Desaparecido', ObjetoSchema);
 
-// ✅ Índice para búsqueda por lugar
-DesaparecidoSchema.index({ lugar_de_desaparicion: 1 });
-
-// ✅ Exportar modelo
-export const Desaparecido = mongoose.models.Desaparecido ||
-    mongoose.model('Desaparecido', DesaparecidoSchema);
+// ✅ Backward compatibility alias
+export const Desaparecido = Objeto;

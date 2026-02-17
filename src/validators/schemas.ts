@@ -29,9 +29,9 @@ export const ObjectIdSchema = z.string().refine(
 /**
  * ✅ Validador de código de identificación
  */
-export const CedulaSchema = z.string().regex(
+export const CodigoSchema = z.string().regex(
     VALIDATION_CONFIG.PATTERNS.CEDULA,
-    'Código inválido. Formato: V-12345678 o E-12345678'
+    'Código inválido'
 );
 
 /**
@@ -45,52 +45,56 @@ export const ISODateSchema = z.string().regex(
 /**
  * ✅ Schema para crear registro
  */
-export const CreateDesaparecidoSchema = z.object({
+export const CreateObjetoSchema = z.object({
     nombre: z.string()
         .min(2, 'Nombre muy corto')
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.MEDIUM, 'Nombre muy largo')
         .trim(),
 
-    cedula: CedulaSchema,
+    codigo: CodigoSchema,
 
-    edad: z.number()
-        .int('Edad debe ser entero')
-        .min(0, 'Edad no puede ser negativa')
-        .max(150, 'Edad inválida'),
+    antiguedad: z.number()
+        .int('Antigüedad debe ser entero')
+        .min(0, 'Antigüedad no puede ser negativa')
+        .max(500, 'Antigüedad inválida'),
 
-    sexo: z.enum(VALIDATION_CONFIG.VALID_SEXO),
-
-    extranjero: z.enum(VALIDATION_CONFIG.VALID_EXTRANJERO),
-
-    nacionalidad: z.string()
+    categoria: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.SHORT)
         .optional(),
 
-    profesion: z.string()
+    origen: z.string()
+        .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.SHORT)
+        .optional(),
+
+    pais_origen: z.string()
+        .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.SHORT)
+        .optional(),
+
+    tipo_objeto: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.MEDIUM)
         .optional(),
 
-    etnia: z.string()
+    clasificacion: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.SHORT)
         .optional(),
 
-    condicion_de_salud: z.string()
+    condicion: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.LONG)
         .optional(),
 
-    discapacidad: z.string()
+    estado_conservacion: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.LONG)
         .optional(),
 
-    lugar_de_confinamiento: z.string()
+    ubicacion_actual: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.LONG)
         .optional(),
 
-    lugar_de_desaparicion: z.string()
+    ultimo_lugar_conocido: z.string()
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.LONG)
         .optional(),
 
-    fecha: ISODateSchema,
+    fecha_registro: ISODateSchema,
 
     imagen: z.string()
         .url('URL de imagen inválida')
@@ -103,15 +107,15 @@ export const CreateDesaparecidoSchema = z.object({
 })
     .refine(
         (data) => {
-            // Si es extranjero (E), nacionalidad es obligatoria
-            if (data.extranjero === 'E' && !data.nacionalidad) {
+            // Si es importado (I), país de origen es obligatorio
+            if (data.origen === 'I' && !data.pais_origen) {
                 return false;
             }
             return true;
         },
         {
-            message: 'Origen es requerido para importados',
-            path: ['nacionalidad'],
+            message: 'País de origen es requerido para importados',
+            path: ['pais_origen'],
         }
     )
     .refine(
@@ -125,11 +129,14 @@ export const CreateDesaparecidoSchema = z.object({
         }
     );
 
+// ✅ Backward compatibility alias
+export const CreateDesaparecidoSchema = CreateObjetoSchema;
+
 /**
  * ✅ Schema para crear solicitud de retiro
  */
 export const CreateRemovalRequestSchema = z.object({
-    desaparecido_id: ObjectIdSchema,  // ✅ CRÍTICO: Previene NoSQL injection
+    objeto_id: ObjectIdSchema,  // ✅ CRÍTICO: Previene NoSQL injection
 
     reason: z.string()
         .min(BUSINESS_CONFIG.REMOVAL_REQUEST.MIN_REASON_LENGTH, 'Razón muy corta')
@@ -176,17 +183,20 @@ export const UpdateRemovalRequestSchema = z.object({
 /**
  * ✅ Schema para query params de desaparecidos
  */
-export const GetDesaparecidosQuerySchema = z.object({
+export const GetObjetosQuerySchema = z.object({
     estado_registro: z.enum(VALIDATION_CONFIG.VALID_ESTADOS).optional(),
     page: z.coerce.number().int().positive().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
+// ✅ Backward compatibility alias
+export const GetDesaparecidosQuerySchema = GetObjetosQuerySchema;
+
 /**
  * ✅ Schema para query params de removal requests
  */
 export const GetRemovalRequestsQuerySchema = z.object({
-    desaparecido_id: ObjectIdSchema.optional(),
+    objeto_id: ObjectIdSchema.optional(),
     status: z.enum(['pending', 'approved', 'rejected']).optional(),
     admin: z.enum(['true', 'false']).optional(),
 });
@@ -216,8 +226,12 @@ export function sanitizeString(str: string): string {
 /**
  * ✅ Type inference helpers
  */
-export type CreateDesaparecidoInput = z.infer<typeof CreateDesaparecidoSchema>;
+export type CreateObjetoInput = z.infer<typeof CreateObjetoSchema>;
 export type CreateRemovalRequestInput = z.infer<typeof CreateRemovalRequestSchema>;
 export type UpdateRemovalRequestInput = z.infer<typeof UpdateRemovalRequestSchema>;
-export type GetDesaparecidosQuery = z.infer<typeof GetDesaparecidosQuerySchema>;
+export type GetObjetosQuery = z.infer<typeof GetObjetosQuerySchema>;
 export type GetRemovalRequestsQuery = z.infer<typeof GetRemovalRequestsQuerySchema>;
+
+// ✅ Backward compatibility aliases
+export type CreateDesaparecidoInput = CreateObjetoInput;
+export type GetDesaparecidosQuery = GetObjetosQuery;

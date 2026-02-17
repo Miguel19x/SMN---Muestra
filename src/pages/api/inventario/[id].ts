@@ -13,18 +13,18 @@ import type { APIRoute } from 'astro';
 import { Types } from 'mongoose';
 import { connectDB } from '../../../lib/mongodb';
 import { CustomError } from '../../../lib/CustomError';
-import { Desaparecido } from '../../../models/desaparecido';
+import { Objeto } from '../../../models/objeto';
 import { verifyAuth, createUnauthorizedResponse } from '../../../lib/auth/auth-middleware';
 import { secureJsonResponse } from '../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../validators/schemas';
-import { DesaparecidoService } from '../../../services/desaparecido.service';
+import { ObjetoService } from '../../../services/objeto.service';
 import { createPublicId } from '../../../lib/security/idObfuscation';
 
 const { ObjectId } = Types;
-const desaparecidoService = new DesaparecidoService();
+const objetoService = new ObjetoService();
 
 /**
- * GET /api/desaparecidos/[id]
+ * GET /api/inventario/[id]
  * Obtener un desaparecido por ID
  */
 export const GET: APIRoute = async ({ params }) => {
@@ -43,62 +43,56 @@ export const GET: APIRoute = async ({ params }) => {
         const mongoId = publicIdMapper.getMongoId(id);
 
         // Si no está en cache, usar findByPublicId del servicio
-        let desaparecido;
+        let objeto;
         if (mongoId) {
-            desaparecido = await Desaparecido.findById(mongoId).lean();
+            objeto = await Objeto.findById(mongoId).lean();
         } else {
             // Fallback: buscar usando public ID directamente
-            desaparecido = await desaparecidoService.findByPublicId(id);
+            objeto = await objetoService.findByPublicId(id);
         }
 
-        if (!desaparecido) {
+        if (!objeto) {
             return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
         }
 
         // Si encontramos por fallback, cachear para futuros requests
-        if (!mongoId && desaparecido) {
-            publicIdMapper.register(desaparecido._id.toString(), id);
+        if (!mongoId && objeto) {
+            publicIdMapper.register(objeto._id.toString(), id);
         }
 
-        // ✅ Transformar a DTO completo (incluir TODOS los campos)
         const response = {
-            // IDs
-            id: createPublicId(desaparecido._id.toString()),
-            _id: desaparecido._id.toString(), // Keep for backward compatibility
+            id: createPublicId(objeto._id.toString()),
+            _id: objeto._id.toString(),
 
-            // Core fields
-            extranjero: desaparecido.extranjero || 'V',
-            nombre: desaparecido.nombre,
-            cedula: desaparecido.cedula || 'Desconocida',
-            edad: desaparecido.edad,
-            sexo: desaparecido.sexo,
-            nacionalidad: desaparecido.nacionalidad,
-            fecha: desaparecido.fecha,
-            hora: (desaparecido as any).hora,
-            imagen: desaparecido.imagen,
+            origen: objeto.origen || 'N',
+            nombre: objeto.nombre,
+            codigo: objeto.codigo || 'Desconocido',
+            antiguedad: objeto.antiguedad,
+            categoria: objeto.categoria,
+            pais_origen: objeto.pais_origen,
+            fecha_registro: objeto.fecha_registro,
+            hora: (objeto as any).hora,
+            imagen: objeto.imagen,
 
-            // Location and details
-            estado: (desaparecido as any).estado, // ✅ Estado geográfico (Anzoátegui, Carabobo, etc.)
-            profesion: desaparecido.profesion,
-            etnia: desaparecido.etnia,
-            lugar_de_desaparicion: desaparecido.lugar_de_desaparicion,
-            lugar_de_confinamiento: desaparecido.lugar_de_confinamiento,
-            condicion_de_salud: desaparecido.condicion_de_salud,
-            discapacidad: desaparecido.discapacidad,
+            estado: (objeto as any).estado,
+            tipo_objeto: objeto.tipo_objeto,
+            clasificacion: objeto.clasificacion,
+            ultimo_lugar_conocido: objeto.ultimo_lugar_conocido,
+            ubicacion_actual: objeto.ubicacion_actual,
+            condicion: objeto.condicion,
+            estado_conservacion: objeto.estado_conservacion,
 
-            // Status
-            estado_registro: desaparecido.estado_registro,
-            etiqueta: desaparecido.etiqueta,
+            estado_registro: objeto.estado_registro,
+            etiqueta: objeto.etiqueta,
 
-            // Campos calculados
-            ageStage: desaparecidoService.getAgeStage(desaparecido.edad),
-            legalCondition: desaparecidoService.getLegalCondition(desaparecido.edad),
+            antiguedadStage: objetoService.getAntiguedadStage(objeto.antiguedad),
+            condicionEstado: objetoService.getCondicionEstado(objeto.antiguedad),
         };
 
         return secureJsonResponse(response, 200);
 
     } catch (error) {
-        console.error('GET /api/desaparecidos/[id] failed', {
+        console.error('GET /api/inventario/[id] failed', {
             error: error instanceof Error ? error.message : 'Unknown',
             timestamp: new Date().toISOString(),
         });
@@ -112,7 +106,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 /**
- * PUT /api/desaparecidos/[id]
+ * PUT /api/inventario/[id]
  * Actualizar un desaparecido (requiere autenticación)
  */
 export const PUT: APIRoute = async ({ params, request }) => {
@@ -149,13 +143,13 @@ export const PUT: APIRoute = async ({ params, request }) => {
         const { _id, __v, createdAt, ...updateData } = body;
 
         // Actualizar
-        const updatedDesaparecido = await Desaparecido.findByIdAndUpdate(
+        const updatedObjeto = await Objeto.findByIdAndUpdate(
             id,
             { $set: updateData },
             { new: true, runValidators: true }
         );
 
-        if (!updatedDesaparecido) {
+        if (!updatedObjeto) {
             return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
         }
 
@@ -166,16 +160,16 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
         // ✅ Transformar a DTO
         const response = {
-            id: createPublicId(updatedDesaparecido._id.toString()),
-            nombre: updatedDesaparecido.nombre,
-            cedula: updatedDesaparecido.cedula,
-            edad: updatedDesaparecido.edad,
-            sexo: updatedDesaparecido.sexo,
-            nacionalidad: updatedDesaparecido.nacionalidad,
-            fecha: updatedDesaparecido.fecha,
-            imagen: updatedDesaparecido.imagen,
-            estado_registro: updatedDesaparecido.estado_registro,
-            etiqueta: updatedDesaparecido.etiqueta,
+            id: createPublicId(updatedObjeto._id.toString()),
+            nombre: updatedObjeto.nombre,
+            codigo: updatedObjeto.codigo,
+            antiguedad: updatedObjeto.antiguedad,
+            categoria: updatedObjeto.categoria,
+            pais_origen: updatedObjeto.pais_origen,
+            fecha_registro: updatedObjeto.fecha_registro,
+            imagen: updatedObjeto.imagen,
+            estado_registro: updatedObjeto.estado_registro,
+            etiqueta: updatedObjeto.etiqueta,
         };
 
         return secureJsonResponse(
@@ -187,7 +181,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
         );
 
     } catch (error) {
-        console.error('PUT /api/desaparecidos/[id] failed', {
+        console.error('PUT /api/inventario/[id] failed', {
             error: error instanceof Error ? error.message : 'Unknown',
             timestamp: new Date().toISOString(),
         });

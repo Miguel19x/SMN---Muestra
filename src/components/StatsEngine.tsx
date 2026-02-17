@@ -9,7 +9,7 @@ import {
   StatsTimelineChart,
   STATS_COLORS,
 } from './stats/StatsChartNew';
-import type { DesaparecidoData } from './type/types';
+import type { ObjetoData } from './type/types';
 import { categorizarProfesion } from '../utils/professionCategorizer';
 import { generateStatisticalReport, normalizeLocation, normalizeNationality } from '../utils/statisticsCalculator';
 import { generateTextReport, generateCSVReport, downloadReport } from '../utils/reportGenerator';
@@ -17,14 +17,14 @@ import { generateProfessionalPDF } from '../utils/pdfReportGenerator';
 
 function StatsEngineContent() {
   const { translate, currentLang } = useLanguage();
-  const [data, setData] = useState<DesaparecidoData[]>([]);
+  const [data, setData] = useState<ObjetoData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/desaparecidos?estado_registro=aprobado')
+    fetch('/api/inventario?estado_registro=aprobado')
       .then(response => response.json())
       .then(data => {
-        setData(data.desaparecidos || []);
+        setData(data.objetos || []);
         setIsLoading(false);
       })
       .catch(() => setIsLoading(false));
@@ -32,48 +32,49 @@ function StatsEngineContent() {
 
   // Estadísticas básicas
   const casosRegistrados = data.length;
-  const casosConDatosCompletos = data.filter(d => d.nombre && d.edad && d.sexo).length;
+  const casosConDatosCompletos = data.filter(d => d.nombre && d.antiguedad && d.categoria).length;
 
-  // Por género
-  const hombres = data.filter(d => d.sexo === 'Masculino').length;
-  const mujeres = data.filter(d => d.sexo === 'Femenino').length;
-  const sinGenero = casosRegistrados - hombres - mujeres;
+  // Por categoría
+  const tipoA = data.filter(d => d.categoria === 'Tipo A').length;
+  const tipoB = data.filter(d => d.categoria === 'Tipo B').length;
+  const sinCategoria = casosRegistrados - tipoA - tipoB;
 
-  // Por grupos de edad
-  const menores = data.filter(d => d.edad !== undefined && d.edad < 18).length;
-  const adultos = data.filter(d => d.edad !== undefined && d.edad >= 18 && d.edad < 65).length;
-  const mayores = data.filter(d => d.edad !== undefined && d.edad >= 65).length;
-  const sinEdad = data.filter(d => d.edad === undefined).length;
+  // Por grupos de antigüedad
+  const nuevos = data.filter(d => d.antiguedad !== undefined && d.antiguedad < 2).length;
+  const recientes = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 2 && d.antiguedad < 5).length;
+  const estandar = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 5 && d.antiguedad < 10).length;
+  const antiguos = data.filter(d => d.antiguedad !== undefined && d.antiguedad >= 10).length;
+  const sinAntiguedad = data.filter(d => d.antiguedad === undefined).length;
 
   // Con imagen vs sin imagen
   const conImagen = data.filter(d => d.imagen && d.imagen.length > 0).length;
 
-  // Por nacionalidad (con detalle mejorado)
-  const nacionalidades = data.map(d => normalizeNationality(d.nacionalidad));
-  const venezolanos = nacionalidades.filter(n => n === 'Nacional').length;
-  const sinNacionalidad = nacionalidades.filter(n => n === 'No especificada').length;
-  const extranjeros = casosRegistrados - venezolanos - sinNacionalidad;
+  // Por país de origen (con detalle mejorado)
+  const paisesOrigen = data.map(d => normalizeNationality(d.pais_origen));
+  const nacionales = paisesOrigen.filter(n => n === 'Nacional').length;
+  const sinPaisOrigen = paisesOrigen.filter(n => n === 'No especificada').length;
+  const importados = casosRegistrados - nacionales - sinPaisOrigen;
 
   // Top 10 edades más comunes
   const top10Edades = useMemo(() => {
-    const edadesCount: { [key: number]: number } = {};
+    const antiguedadesCount: { [key: number]: number } = {};
     data.forEach(d => {
-      if (d.edad && d.edad > 0 && d.edad <= 100) {
-        edadesCount[d.edad] = (edadesCount[d.edad] || 0) + 1;
+      if (d.antiguedad && d.antiguedad > 0 && d.antiguedad <= 100) {
+        antiguedadesCount[d.antiguedad] = (antiguedadesCount[d.antiguedad] || 0) + 1;
       }
     });
-    return Object.entries(edadesCount)
+    return Object.entries(antiguedadesCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([edad, count]) => ({ name: translate('Stats-Age-Years', { age: edad }), value: count }));
+      .map(([antiguedad, count]) => ({ name: translate('Stats-Age-Years', { age: antiguedad }), value: count }));
   }, [data, translate]);
 
-  // Lugares de Desaparición (top 10)
-  const desaparicionLocations = useMemo(() => {
+  // Último Lugar Conocido (top 10)
+  const ultimoLugarConocido = useMemo(() => {
     const locationsCount: { [key: string]: number } = {};
     data.forEach(d => {
-      if (d.lugar_de_desaparicion && d.lugar_de_desaparicion.trim()) {
-        const lugar = d.lugar_de_desaparicion;
+      if (d.ultimo_lugar_conocido && d.ultimo_lugar_conocido.trim()) {
+        const lugar = d.ultimo_lugar_conocido;
         const parts = lugar.split(',');
         const baseName = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
         const normalized = normalizeLocation(baseName);
@@ -88,12 +89,12 @@ function StatsEngineContent() {
       .map(([location, count]) => ({ name: location, value: count }));
   }, [data]);
 
-  // Centros de Confinamiento (top 10)
-  const confinementCenters = useMemo(() => {
+  // Ubicación Actual (top 10)
+  const ubicacionActual = useMemo(() => {
     const centersCount: { [key: string]: number } = {};
     data.forEach(d => {
-      if (d.lugar_de_confinamiento && d.lugar_de_confinamiento.trim()) {
-        const lugar = d.lugar_de_confinamiento;
+      if (d.ubicacion_actual && d.ubicacion_actual.trim()) {
+        const lugar = d.ubicacion_actual;
         const parts = lugar.split(',');
         const baseName = parts.length > 1 ? parts[parts.length - 1].trim() : lugar.trim();
         const normalized = normalizeLocation(baseName);
@@ -112,8 +113,8 @@ function StatsEngineContent() {
   const casosPorMes = useMemo(() => {
     const mesesCount: { [key: string]: number } = {};
     data.forEach(d => {
-      if (d.fecha) {
-        const parts = d.fecha.split('-');
+      if (d.fecha_registro) {
+        const parts = d.fecha_registro.split('-');
         if (parts.length >= 2) {
           const mesKey = `${parts[0]}-${parts[1]}`;
           mesesCount[mesKey] = (mesesCount[mesKey] || 0) + 1;
@@ -145,8 +146,8 @@ function StatsEngineContent() {
   const profesionesTop = useMemo(() => {
     const categoriasCount: { [key: string]: number } = {};
     data.forEach(d => {
-      if (d.profesion && d.profesion.trim()) {
-        const categoria = categorizarProfesion(d.profesion);
+      if (d.tipo_objeto && d.tipo_objeto.trim()) {
+        const categoria = categorizarProfesion(d.tipo_objeto);
         categoriasCount[categoria] = (categoriasCount[categoria] || 0) + 1;
       }
     });
@@ -196,7 +197,7 @@ function StatsEngineContent() {
         />
         <MetricCard
           title={translate('Stats-Metric-Minors')}
-          value={menores.toLocaleString()}
+          value={nuevos.toLocaleString()}
           icon={Baby}
         />
         <MetricCard
@@ -219,9 +220,9 @@ function StatsEngineContent() {
         <ChartCard title={translate('Stats-Chart-GenderDistribution')}>
           <StatsDonutChart
             data={[
-              { name: translate('Stats-Label-Men'), value: hombres },
-              { name: translate('Stats-Label-Women'), value: mujeres },
-              { name: translate('Stats-Label-NotSpecified'), value: sinGenero },
+              { name: translate('Stats-Label-Men'), value: tipoA },
+              { name: translate('Stats-Label-Women'), value: tipoB },
+              { name: translate('Stats-Label-NotSpecified'), value: sinCategoria },
             ].filter(d => d.value > 0)}
           />
         </ChartCard>
@@ -230,9 +231,9 @@ function StatsEngineContent() {
         <ChartCard title={translate('Stats-Chart-ByNationality')}>
           <StatsDonutChart
             data={[
-              { name: translate('Stats-Label-Venezuelans'), value: venezolanos },
-              { name: translate('Stats-Label-Foreigners'), value: extranjeros },
-              { name: translate('Stats-Label-NotSpecified'), value: sinNacionalidad },
+              { name: translate('Stats-Label-Venezuelans'), value: nacionales },
+              { name: translate('Stats-Label-Foreigners'), value: importados },
+              { name: translate('Stats-Label-NotSpecified'), value: sinPaisOrigen },
             ].filter(d => d.value > 0)}
             colors={[STATS_COLORS.secondary, STATS_COLORS.neutral, STATS_COLORS.gray1]}
           />
@@ -242,10 +243,10 @@ function StatsEngineContent() {
         <ChartCard title={translate('Stats-Chart-AgeDistribution')}>
           <StatsDonutChart
             data={[
-              { name: translate('Stats-Label-Under18'), value: menores },
-              { name: translate('Stats-Label-Adults18to64'), value: adultos },
-              { name: translate('Stats-Label-Over65'), value: mayores },
-              { name: translate('Stats-Label-NotSpecified'), value: sinEdad },
+              { name: translate('Stats-Label-Under18'), value: nuevos },
+              { name: translate('Stats-Label-Adults18to64'), value: recientes + estandar },
+              { name: translate('Stats-Label-Over65'), value: antiguos },
+              { name: translate('Stats-Label-NotSpecified'), value: sinAntiguedad },
             ].filter(d => d.value > 0)}
             colors={[STATS_COLORS.critical, STATS_COLORS.primary, STATS_COLORS.neutral, STATS_COLORS.gray1]}
           />
@@ -270,16 +271,16 @@ function StatsEngineContent() {
         )}
 
         {/* Disappearance Locations - Full Width */}
-        {desaparicionLocations.length > 0 && (
+        {ultimoLugarConocido.length > 0 && (
           <ChartCard title={translate('Stats-Chart-DisappearanceLocationsTop10')} fullWidth>
-            <StatsBarChart data={desaparicionLocations} color={STATS_COLORS.critical} height={350} />
+            <StatsBarChart data={ultimoLugarConocido} color={STATS_COLORS.critical} height={350} />
           </ChartCard>
         )}
 
         {/* Confinement Centers - Full Width */}
-        {confinementCenters.length > 0 && (
+        {ubicacionActual.length > 0 && (
           <ChartCard title={translate('Stats-Chart-ConfinementCentersTop10')} fullWidth>
-            <StatsBarChart data={confinementCenters} color={STATS_COLORS.primary} height={350} />
+            <StatsBarChart data={ubicacionActual} color={STATS_COLORS.primary} height={350} />
           </ChartCard>
         )}
 
@@ -298,7 +299,7 @@ function StatsEngineContent() {
 }
 
 // Report Generation Section Component
-function ReportSection({ data }: { data: DesaparecidoData[] }) {
+function ReportSection({ data }: { data: ObjetoData[] }) {
   const { translate } = useLanguage();
   const [report, setReport] = useState<ReturnType<typeof generateStatisticalReport> | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);

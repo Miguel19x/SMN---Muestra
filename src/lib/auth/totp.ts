@@ -31,7 +31,7 @@ export function generateSecret(): string {
 export function generateOtpAuthUrl(
     username: string,
     secret: string,
-    issuer: string = 'NoMasSecuestros'
+    issuer: string = 'DataTracker'
 ): string {
     return authenticator.keyuri(username, issuer, secret);
 }

@@ -4,8 +4,8 @@ import { LanguageProvider, useLanguage } from './additionals/scripts/i18n';
 import { UniversalErrorBoundary } from './UniversalErrorBoundary';
 import SearchBar from './search/SearchBar';
 import SearchFieldSelector from './search/searchFieldSelector'
-import DesaparecidosTable from './search/DesaparecidosTable';
-import { getAgeStage, getLegalCondition, renderValue, formatCedula } from './search/utils';
+import ObjetosTable from './search/ObjetosTable';
+import { getAntiguedadStage, getCondicionEstado, renderValue, formatCodigo } from './search/utils';
 import ErrorBoundary from './search/ErrorBoundary';
 import useFetchData from './search/hook/useFetchData';
 import { useFilteredData } from './search/hook/useFilteredData';
@@ -22,35 +22,35 @@ function SearchEngineContent({ initialSearchTerm = '', focusSearchInput = false 
   const { translate } = useLanguage();
 
   const {
-    data: allDesaparecidos,
+    data: allObjetos,
     isLoading,
     isError,
   } = useFetchData('aprobado');
 
-  const filteredDesaparecidos = useFilteredData(allDesaparecidos, searchTerm, searchField);
+  const filteredObjetos = useFilteredData(allObjetos, searchTerm, searchField);
 
-  const totalPages = Math.ceil((filteredDesaparecidos?.length || 0) / itemsPerPage);
-  const paginatedDesaparecidos = filteredDesaparecidos?.slice(
+  const totalPages = Math.ceil((filteredObjetos?.length || 0) / itemsPerPage);
+  const paginatedObjetos = filteredObjetos?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   ) || [];
 
   // Función para detectar automáticamente el tipo de campo
-  // Solo detecta cédula y fecha, el resto busca en todos los campos
+  // Solo detecta código y fecha, el resto busca en todos los campos
   const detectSearchField = useCallback((value: string): string => {
     if (!value.trim()) return '';
 
-    // Si es solo números → cédula
-    if (/^[\d.]+$/.test(value.trim())) {
-      return 'cedula';
+    // Si es alfanumérico con guiones → código
+    if (/^[A-Za-z0-9\-]+$/.test(value.trim()) && value.includes('-')) {
+      return 'codigo';
     }
 
     // Si es formato fecha (YYYY-MM-DD o DD/MM/YYYY)
     if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim()) || /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(value.trim())) {
-      return 'fecha';
+      return 'fecha_registro';
     }
 
-    // Por defecto, buscar en todos los campos (no auto-seleccionar nombre)
+    // Por defecto, buscar en todos los campos
     return '';
   }, []);
 
@@ -58,7 +58,7 @@ function SearchEngineContent({ initialSearchTerm = '', focusSearchInput = false 
     setSearchTerm(value);
     setCurrentPage(1);
 
-    // Auto-detectar el campo solo para cédula y fecha
+    // Auto-detectar el campo solo para código y fecha
     if (!searchField || searchField === '') {
       const detectedField = detectSearchField(value);
       if (detectedField && detectedField !== searchField) {
@@ -106,7 +106,7 @@ function SearchEngineContent({ initialSearchTerm = '', focusSearchInput = false 
               <div className="text-red-500 text-center">
                 {translate('Error')}
               </div>
-            ) : filteredDesaparecidos && filteredDesaparecidos.length > 0 ? (
+            ) : filteredObjetos && filteredObjetos.length > 0 ? (
               <div>
                 <h2 className="text-xl font-semibold mb-6 text-center">{translate('Component-2')}</h2>
                 <div className="w-full md:max-w-[85%] mx-auto">
@@ -116,12 +116,12 @@ function SearchEngineContent({ initialSearchTerm = '', focusSearchInput = false 
                     onItemsPerPageChange={handleItemsPerPageChange}
                   />
                   <div className="overflow-x-auto mt-6">
-                    <DesaparecidosTable
-                      data={paginatedDesaparecidos}
+                    <ObjetosTable
+                      data={paginatedObjetos}
                       renderValue={renderValue}
-                      formatCedula={formatCedula}
-                      getAgeStage={getAgeStage}
-                      getLegalCondition={getLegalCondition}
+                      formatCodigo={formatCodigo}
+                      getAntiguedadStage={getAntiguedadStage}
+                      getCondicionEstado={getCondicionEstado}
                     />
                   </div>
                 </div>

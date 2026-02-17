@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface RemovalRequest {
     _id: string;
-    desaparecido_id: {
+    objeto_id: {
         _id: string;
         nombre: string;
         cedula: string;
@@ -155,16 +155,16 @@ const RemovalRequestsPanel: React.FC = () => {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            {request.desaparecido_id?.imagen && (
+                                            {request.objeto_id?.imagen && (
                                                 <img
-                                                    src={request.desaparecido_id.imagen}
+                                                    src={request.objeto_id.imagen}
                                                     alt=""
                                                     className="w-8 h-8 rounded-full object-cover"
                                                 />
                                             )}
                                             <div>
-                                                <p className="font-medium">{request.desaparecido_id?.nombre}</p>
-                                                <p className="text-xs text-gray-500">{request.desaparecido_id?.cedula}</p>
+                                                <p className="font-medium">{request.objeto_id?.nombre}</p>
+                                                <p className="text-xs text-gray-500">{request.objeto_id?.cedula}</p>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -226,7 +226,7 @@ const RemovalRequestsPanel: React.FC = () => {
                         </DialogTitle>
                         <DialogDescription>
                             {actionType === 'approve'
-                                ? 'Al aprobar, el registro del desaparecido será eliminado permanentemente.'
+                                ? 'Al aprobar, el registro del objeto será eliminado permanentemente.'
                                 : 'La solicitud será rechazada y el registro permanecerá visible.'}
                         </DialogDescription>
                     </DialogHeader>
@@ -234,7 +234,7 @@ const RemovalRequestsPanel: React.FC = () => {
                     {selectedRequest && (
                         <div className="py-4">
                             <p><strong>Solicitante:</strong> @{selectedRequest.twitter_username}</p>
-                            <p><strong>Persona:</strong> {selectedRequest.desaparecido_id?.nombre}</p>
+                            <p><strong>Objeto:</strong> {selectedRequest.objeto_id?.nombre}</p>
                             <p><strong>Razón:</strong> {selectedRequest.reason}</p>
 
                             <div className="mt-4">

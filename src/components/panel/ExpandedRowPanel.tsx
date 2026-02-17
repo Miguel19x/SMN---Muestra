@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useFormValidation } from '../forms/validation'
 import ImageUpload from '../forms/ImageUpload'
-import type { ExpandedRowPanelProps, DesaparecidoData, TranslationKey } from '../type/types'
+import type { ExpandedRowPanelProps, ObjetoData, TranslationKey } from '../type/types'
 import { useTranslation } from '../additionals/scripts/i18n'
 
 export default function Component({
   item,
-  getAgeStage,
-  getLegalCondition,
+  getAntiguedadStage,
+  getCondicionEstado,
   renderValue,
   isEditing,
   editedData,
@@ -25,11 +25,11 @@ export default function Component({
 }: ExpandedRowPanelProps) {
   const { t } = useTranslation();
   const { validateForm } = useFormValidation();
-  const [localDetails, setLocalDetails] = useState<DesaparecidoData | null>(null)
+  const [localDetails, setLocalDetails] = useState<ObjetoData | null>(null)
   const [resetImage, setResetImage] = useState(false)
 
   const { data: details, isLoading, error } = useQuery({
-    queryKey: ['desaparecido', item.id],
+    queryKey: ['objeto', item.id],
     queryFn: () => fetchDesaparecidoDetails(item.id as string),
     enabled: !!item.id,
     staleTime: 0,
@@ -51,11 +51,11 @@ export default function Component({
     const { name, value } = e.target
     onInputChange(e)
 
-    const newErrors = validateForm({ ...localDetails, [name]: value } as DesaparecidoData)
+    const newErrors = validateForm({ ...localDetails, [name]: value } as ObjetoData)
     setErrors(prev => ({ ...prev, [name]: newErrors[name] || '' }))
   }
 
-  const handleSelectChange = (name: keyof DesaparecidoData, value: string) => {
+  const handleSelectChange = (name: keyof ObjetoData, value: string) => {
     onInputChange({ target: { name, value } } as React.ChangeEvent<HTMLInputElement>)
   }
 
@@ -76,7 +76,6 @@ export default function Component({
         onInputChange({ target: { name, value: url } } as React.ChangeEvent<HTMLInputElement>);
       } catch (error) {
         console.error('Error uploading image:', error);
-        // Manejar el error aquí (por ejemplo, mostrar un mensaje al usuario)
       }
     } else {
       onInputChange({ target: { name, value } } as React.ChangeEvent<HTMLInputElement>);
@@ -91,9 +90,9 @@ export default function Component({
     setResetImage(true)
   }
 
-  const renderEditableField = (name: keyof DesaparecidoData, label: TranslationKey, type: string = "text", value?: string | number, additionalInfo?: string) => {
+  const renderEditableField = (name: keyof ObjetoData, label: TranslationKey, type: string = "text", value?: string | number, additionalInfo?: string) => {
     if (isEditing) {
-      if (name === 'sexo') {
+      if (name === 'categoria') {
         return (
           <div className="space-y-1">
             <Label htmlFor={name} className="dark:text-gray-200">{t(label)} {additionalInfo && `(${additionalInfo})`}</Label>
@@ -102,8 +101,10 @@ export default function Component({
                 <SelectValue placeholder={t('Form-GS')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Masculino">{t('Form-GS-M')}</SelectItem>
-                <SelectItem value="Femenino">{t('Form-GS-F')}</SelectItem>
+                <SelectItem value="Tipo A">Tipo A</SelectItem>
+                <SelectItem value="Tipo B">Tipo B</SelectItem>
+                <SelectItem value="Tipo C">Tipo C</SelectItem>
+                <SelectItem value="Tipo D">Tipo D</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -158,8 +159,8 @@ export default function Component({
     )
   }
 
-  const ageStage = localDetails?.edad !== undefined ? getAgeStage(localDetails.edad) : 'N/A'
-  const legalCondition = localDetails?.edad !== undefined ? getLegalCondition(localDetails.edad) : 'N/A'
+  const antiguedadStage = localDetails?.antiguedad !== undefined ? getAntiguedadStage(localDetails.antiguedad) : 'N/A'
+  const condicionEstado = localDetails?.antiguedad !== undefined ? getCondicionEstado(localDetails.antiguedad) : 'N/A'
 
   if (isLoading) {
     return <div className="p-4 text-center">{t('Process2')}</div>
@@ -176,19 +177,19 @@ export default function Component({
   return (
     <div className="grid grid-cols-3 gap-4 dark:bg-gray-800 dark:text-gray-200">
       <div className="space-y-4">
-        {renderEditableField('sexo', 'Form-G', 'text', editedData?.sexo || localDetails.sexo, t(ageStage as TranslationKey))}
-        {renderEditableField('edad', 'Form-A', 'number', editedData?.edad || localDetails.edad, t(legalCondition as TranslationKey))}
-        {renderEditableField('profesion', 'Form-P', 'text', editedData?.profesion || localDetails.profesion)}
-        {renderEditableField('nacionalidad', 'Form-N', 'text', editedData?.nacionalidad || localDetails.nacionalidad || (localDetails.extranjero === 'V' ? t('Form-NV') : 'N/A'))}
-        {renderEditableField('condicion_de_salud', 'Form-HC', 'text', editedData?.condicion_de_salud || localDetails.condicion_de_salud)}
-        {renderEditableField('discapacidad', 'Form-D', 'text', editedData?.discapacidad || localDetails.discapacidad)}
+        {renderEditableField('categoria', 'Form-G', 'text', editedData?.categoria || localDetails.categoria, t(antiguedadStage as TranslationKey))}
+        {renderEditableField('antiguedad', 'Form-A', 'number', editedData?.antiguedad || localDetails.antiguedad, t(condicionEstado as TranslationKey))}
+        {renderEditableField('tipo_objeto', 'Form-P', 'text', editedData?.tipo_objeto || localDetails.tipo_objeto)}
+        {renderEditableField('pais_origen', 'Form-N', 'text', editedData?.pais_origen || localDetails.pais_origen || (localDetails.origen === 'N' ? t('Form-NV') : 'N/A'))}
+        {renderEditableField('condicion', 'Form-HC', 'text', editedData?.condicion || localDetails.condicion)}
+        {renderEditableField('estado_conservacion', 'Form-D', 'text', editedData?.estado_conservacion || localDetails.estado_conservacion)}
       </div>
       <div className="space-y-4">
-        {renderEditableField('lugar_de_confinamiento', 'Form-PlaceC', 'text', editedData?.lugar_de_confinamiento || localDetails.lugar_de_confinamiento)}
-        {renderEditableField('lugar_de_desaparicion', 'Form-LD', 'text', editedData?.lugar_de_desaparicion || localDetails.lugar_de_desaparicion)}
-        {renderEditableField('fecha', 'Form-DD', 'date', editedData?.fecha || localDetails.fecha)}
-        {renderEditableField('hora', 'Form-DT', 'time', editedData?.hora || localDetails.hora)}
-        {renderEditableField('etnia', 'Form-E', 'text', editedData?.etnia || localDetails.etnia)}
+        {renderEditableField('ubicacion_actual', 'Form-PlaceC', 'text', editedData?.ubicacion_actual || localDetails.ubicacion_actual)}
+        {renderEditableField('ultimo_lugar_conocido', 'Form-LD', 'text', editedData?.ultimo_lugar_conocido || localDetails.ultimo_lugar_conocido)}
+        {renderEditableField('fecha_registro', 'Form-DD', 'date', editedData?.fecha_registro || localDetails.fecha_registro)}
+        {renderEditableField('hora_registro', 'Form-DT', 'time', editedData?.hora_registro || localDetails.hora_registro)}
+        {renderEditableField('clasificacion', 'Form-E', 'text', editedData?.clasificacion || localDetails.clasificacion)}
       </div>
       <div className="flex justify-center items-center">
         {renderEditableField('imagen', 'List-Info-I', 'text', editedData?.imagen || localDetails.imagen)}

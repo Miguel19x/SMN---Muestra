@@ -48,14 +48,5 @@
             "source": "/health",
             "destination": "/api/health"
         }
-    ],
-    "functions": {
-        "api/**/*.js": {
-            "maxDuration": 30
-        },
-        "api/**/*.ts": {
-            "maxDuration": 30
-        }
-    },
-    "crons": []
+    ]
 }

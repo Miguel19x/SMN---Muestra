@@ -15,5 +15,7 @@ export default defineConfig({
     applyBaseStyles: false,
   })],
 
-  adapter: vercel()
+  adapter: vercel({
+    maxDuration: 30
+  })
 });

@@ -258,7 +258,7 @@ interface TransProps {
 
 export function Trans({ i18nKey, vars }: TransProps) {
   const { translate } = useLanguage();
-  return <React.Fragment>{translate(i18nKey, vars)}</React.Fragment>;
+  return <>{translate(i18nKey, vars)}</>;
 }
 
 export function useTranslation() {

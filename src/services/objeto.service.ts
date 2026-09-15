@@ -4,7 +4,7 @@
  * ✅ Métodos renombrados para inventario de objetos
  */
 
-import { Types, Document } from 'mongoose';
+import { Types } from 'mongoose';
 import { Objeto } from '../models/objeto';
 import redis from '../lib/redis';
 import type { IObjeto, CreateObjetoDTO } from '../types/objeto.types';

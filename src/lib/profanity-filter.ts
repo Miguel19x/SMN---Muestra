@@ -7,8 +7,6 @@
  * - Mejor performance O(n) vs O(n×m)
  */
 
-import { BUSINESS_CONFIG } from '../config/app.config';
-
 // Lista de palabras prohibidas en español
 const spanishBlacklist: string[] = [
     'maldito', 'maldita', 'carajo', 'coño', 'verga', 'marico', 'marica',

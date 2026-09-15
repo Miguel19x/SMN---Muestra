@@ -15,7 +15,6 @@ import { getProjectTweets, getWhitelistedAccountsTweets, formatTweetDate } from 
 import redis from '../../lib/redis';
 import { secureJsonResponse } from '../../middleware/securityHeaders';
 import { rateLimitApiGet } from '../../middleware/bruteForceProtection';
-import { CACHE_CONFIG } from '../../config/app.config';
 
 // ✅ Constantes de cache
 const TWEETS_CACHE_TTL = 900; // 15 minutos

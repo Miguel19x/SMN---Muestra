@@ -168,7 +168,7 @@ export function generateProfessionalPDF(report: StatisticalReport, t: Translator
 // COVER PAGE
 // ============================================
 
-function addCoverPage(doc: jsPDF, report: StatisticalReport, t: Translator): number {
+function addCoverPage(doc: jsPDF, _report: StatisticalReport, t: Translator): number {
     const pageHeight = doc.internal.pageSize.getHeight();
 
     // Background Band
@@ -336,7 +336,6 @@ function addJurisdictionalNote(doc: jsPDF, startY: number, t: Translator): numbe
     let y = startY;
 
     // We use a highlighted box for this urgent note
-    const pageWidth = doc.internal.pageSize.getWidth();
     y = checkPageBreak(doc, y, 50);
 
     y = checkPageBreak(doc, y, 50);
@@ -856,7 +855,7 @@ function addConclusions(doc: jsPDF, report: StatisticalReport, startY: number, t
     doc.setTextColor(...COLORS.text);
 
     // Use dynamic conclusions from the rigorous analysis engine
-    report.conclusions.forEach((conclusion, index) => {
+    report.conclusions.forEach((conclusion) => {
         y = checkPageBreak(doc, y, 15);
         y += 4;
 
@@ -1005,14 +1004,6 @@ function formatDate(isoString: string): string {
         month: 'long',
         day: 'numeric',
     });
-}
-
-function formatDateForFilename(isoString: string): string {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}${month}${day}`;
 }
 
 /**

@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import mongoose from 'mongoose';
 
 // Mock de conexión MongoDB
 describe('MongoDB Connection', () => {

@@ -14,7 +14,7 @@ import mongoose from 'mongoose';
  * - 200: Sistema operativo
  * - 503: Sistema con problemas críticos
  */
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
     const startTime = Date.now();
 
     try {

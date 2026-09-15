@@ -10,7 +10,6 @@
  */
 
 import type { APIRoute } from 'astro';
-import { Types } from 'mongoose';
 import { connectDB } from '../../../lib/mongodb';
 import { CustomError } from '../../../lib/CustomError';
 import { Objeto } from '../../../models/objeto';
@@ -21,7 +20,6 @@ import { ObjetoService } from '../../../services/objeto.service';
 import { createPublicId } from '../../../lib/security/idObfuscation';
 import { getDemoObjetoById, updateDemoObjeto } from '../../../lib/demoData';
 
-const { ObjectId } = Types;
 const objetoService = new ObjetoService();
 
 /**

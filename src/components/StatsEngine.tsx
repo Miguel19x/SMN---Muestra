@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, Camera, AlertTriangle, Baby, FileText, Download, FileSpreadsheet } from 'lucide-react';
+import { Users, Camera, AlertTriangle, Baby, FileText } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './additionals/scripts/i18n';
 import MetricCard from './stats/MetricCard';
 import {
@@ -12,7 +12,6 @@ import {
 import type { ObjetoData } from './type/types';
 import { categorizarProfesion } from '../utils/professionCategorizer';
 import { generateStatisticalReport, normalizeLocation, normalizeNationality } from '../utils/statisticsCalculator';
-import { generateTextReport, generateCSVReport, downloadReport } from '../utils/reportGenerator';
 import { generateProfessionalPDF } from '../utils/pdfReportGenerator';
 
 function StatsEngineContent() {
@@ -303,16 +302,6 @@ function ReportSection({ data }: { data: ObjetoData[] }) {
   const { translate } = useLanguage();
   const [report, setReport] = useState<ReturnType<typeof generateStatisticalReport> | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleGenerateReport = useCallback(() => {
-    setIsGenerating(true);
-    // Small delay to show loading state
-    setTimeout(() => {
-      const generatedReport = generateStatisticalReport(data);
-      setReport(generatedReport);
-      setIsGenerating(false);
-    }, 500);
-  }, [data]);
 
   const handleGeneratePDF = useCallback(() => {
     setIsGenerating(true);

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import PersonalInfoForm from './forms/PersonalInfoForm'
@@ -9,7 +9,7 @@ import { useFormValidation } from './forms/validation'
 import { LanguageProvider, useTranslation } from './additionals/scripts/i18n';
 
 function UploadEngineContent() {
-  const { t: translate, lang, forceUpdate } = useTranslation();
+  const { t: translate } = useTranslation();
   const { validateForm } = useFormValidation();
   const [formData, setFormData] = useState<ObjetoData>({
     origen: 'N',

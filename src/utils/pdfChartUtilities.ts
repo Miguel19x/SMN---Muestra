@@ -149,7 +149,6 @@ export function drawLineChart(
 ) {
     const { x, y, width, height } = dims;
     const chartBottom = y + height;
-    const chartRight = x + width;
 
     // Config
     const padding = { left: 10, bottom: 10, top: 5, right: 5 };
@@ -223,50 +222,6 @@ export interface PieData {
     color?: [number, number, number];
 }
 
-// Draws a donut chart sector
-// Note: jsPDF doesn't natively support arcs effortlessly, so we approximate with lines or plugin.
-// Since we want zero dependencies, we'll use a simple "Stacked Bar" as a specialized alternative OR
-// implement a basic arc drawer. Given the request asked for donut/pie, a colored segmented bar is often
-// cleaner in PDF reports than a jagged manually calculated pie.
-// HOWEVER, let's try a precise Sector implementation using basic geometry.
-
-function drawSector(
-    doc: jsPDF,
-    cx: number,
-    cy: number,
-    r: number,
-    startAngleDeg: number,
-    endAngleDeg: number,
-    color: [number, number, number]
-) {
-    if (endAngleDeg - startAngleDeg >= 360) {
-        setFillColor(doc, color);
-        doc.circle(cx, cy, r, 'F');
-        return;
-    }
-
-    const rad = Math.PI / 180;
-    const x1 = cx + r * Math.cos(startAngleDeg * rad);
-    const y1 = cy + r * Math.sin(startAngleDeg * rad);
-    const x2 = cx + r * Math.cos(endAngleDeg * rad);
-    const y2 = cy + r * Math.sin(endAngleDeg * rad);
-
-    // For large angles (>180), we'd need multiple curves or separate path commands.
-    // The simplest robust way without plugins is to draw a filled triangle fan or use the `pie` method if available in modern jsPDF types.
-    // Standard jsPDF 'lines' or 'path' operations are best.
-
-    // We will use the 'lines' method to simulate the wedge
-    // Because true arcs are hard, let's stick to a robust fall-back: A "100% Stacked Bar". 
-    // It conveys the same "Part-to-Whole" relationship and is much easier to render perfectly reliably.
-    // BUT the user specifically asked for "Gráfico Circular (Pastel) o de Anillos".
-    // Let's do a simple one: Draw distinct colored squares with labels if we can't do circles easily.
-
-    // Actually, `doc.circle` is easy. Partial circles are hard.
-    // Let's use the 'Stacked Bar' approach for the "Part-to-Whole" but styled nicely.
-    // It represents the data perfectly and fits APA style well.
-}
-
-
 // Replacing Donut with "Part-to-Whole Bar" for reliability in manual implementation
 // It functions visually similar to a donut linearized.
 export function drawPartToWholeChart(
@@ -274,13 +229,13 @@ export function drawPartToWholeChart(
     data: PieData[],
     dims: ChartDimensions
 ) {
-    const { x, y, width, height } = dims;
+    const { x, y, width } = dims;
     const total = data.reduce((s, i) => s + i.value, 0);
     let currentX = x;
     const barH = 15;
 
     // Draw the segments
-    data.forEach((item, i) => {
+    data.forEach((item) => {
         const segWidth = (item.value / total) * width;
         const color = item.color || DEFAULT_THEME.primary;
 
@@ -294,7 +249,7 @@ export function drawPartToWholeChart(
     const legendXStart = x;
     let currentLegendX = legendXStart;
 
-    data.forEach((item, i) => {
+    data.forEach((item) => {
         const color = item.color || DEFAULT_THEME.primary;
         const percent = ((item.value / total) * 100).toFixed(1) + '%';
         const labelText = `${sanitizeChartText(item.label)} (${percent})`;

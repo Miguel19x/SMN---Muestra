@@ -17,11 +17,8 @@ import { Objeto } from '../../../../models/objeto';
 import { verifyAuth, createUnauthorizedResponse } from '../../../../lib/auth/auth-middleware';
 import { secureJsonResponse } from '../../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../../validators/schemas';
-import { ObjetoService } from '../../../../services/objeto.service';
 import redis from '../../../../lib/redis';
 import { acceptDemoObjeto } from '../../../../lib/demoData';
-
-const objetoService = new ObjetoService();
 
 /**
  * POST /api/inventario/[id]/accept

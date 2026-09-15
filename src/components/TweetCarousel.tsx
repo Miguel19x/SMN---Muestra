@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { LanguageProvider, useLanguage } from './additionals/scripts/i18n';
 import { sanitizeImageUrl } from '@/lib/sanitize';
 

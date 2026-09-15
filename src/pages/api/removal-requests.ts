@@ -56,7 +56,7 @@ const UpdateRemovalRequestSchema = z.object({
 });
 
 // ✅ MEJORA: Response DTOs
-interface RemovalRequestResponseDTO {
+export interface RemovalRequestResponseDTO {
     id: string;
     desaparecido: {
         id: string;

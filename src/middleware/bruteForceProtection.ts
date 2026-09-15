@@ -146,18 +146,22 @@ export async function rateLimitLogin(request: Request): Promise<{
     const ip = getClientIp(request);
     const hashedIp = hashIp(ip);
 
-    const { success, reset } = await loginRateLimiter.limit(hashedIp);
+    try {
+        const { success, reset } = await loginRateLimiter.limit(hashedIp);
 
-    if (!success) {
-        securityEvent('rate_limit', {
-            endpoint: 'login',
-        });
+        if (!success) {
+            securityEvent('rate_limit', {
+                endpoint: 'login',
+            });
 
-        return {
-            success: false,
-            message: 'Demasiados intentos de inicio de sesión. Intente más tarde.',
-            retryAfter: Math.ceil((reset - Date.now()) / 1000),
-        };
+            return {
+                success: false,
+                message: 'Demasiados intentos de inicio de sesión. Intente más tarde.',
+                retryAfter: Math.ceil((reset - Date.now()) / 1000),
+            };
+        }
+    } catch {
+        // Redis no disponible en demo/offline
     }
 
     return { success: true };
@@ -174,28 +178,33 @@ export async function rateLimitApiGet(request: Request): Promise<{
     const ip = getClientIp(request);
     const hashedIp = hashIp(ip);
 
-    const { success, limit, remaining, reset } = await apiGetRateLimiter.limit(hashedIp);
+    try {
+        const { success, limit, remaining, reset } = await apiGetRateLimiter.limit(hashedIp);
 
-    const headers = {
-        'X-RateLimit-Limit': limit.toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': reset.toString(),
-    };
-
-    if (!success) {
-        securityEvent('rate_limit', {
-            endpoint: 'api_get',
-        });
-
-        return {
-            success: false,
-            message: 'Límite de solicitudes excedido. Intente más tarde.',
-            headers: {
-                ...headers,
-                'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
-            },
+        const headers = {
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+            'X-RateLimit-Reset': reset.toString(),
         };
-    }
 
-    return { success: true, headers };
+        if (!success) {
+            securityEvent('rate_limit', {
+                endpoint: 'api_get',
+            });
+
+            return {
+                success: false,
+                message: 'Límite de solicitudes excedido. Intente más tarde.',
+                headers: {
+                    ...headers,
+                    'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
+                },
+            };
+        }
+
+        return { success: true, headers };
+    } catch (e) {
+        // Redis no disponible en demo/offline
+        return { success: true, headers: {} };
+    }
 }

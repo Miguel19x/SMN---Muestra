@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { LanguageProvider, useTranslation } from './additionals/scripts/i18n'
+import { ShieldCheck } from 'lucide-react'
 
 function LoginFormContent() {
   const [username, setUsername] = useState('')
@@ -241,6 +242,29 @@ function LoginFormContent() {
               </Button>
             </div>
             <div ref={turnstileRef} className="mt-4 flex justify-center w-full h-[50px]"></div>
+
+            <div className="relative my-4 pt-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400 font-semibold">
+                  Modo Presentación / Demo
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => {
+                document.cookie = "token=demo-admin-token; path=/; max-age=86400; SameSite=Lax";
+                window.location.href = "/panel-admin";
+              }}
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium py-2.5 px-4 rounded-md shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-5 h-5 text-emerald-200" />
+              Acceso Rápido al Panel Admin (Demo)
+            </Button>
           </form>
         )}
 

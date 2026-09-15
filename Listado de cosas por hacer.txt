@@ -1,5 +1,11 @@
-1. Arreglar los mensajes tipo toast y reemplazarlos por unos propios.
+1. [COMPLETADO] Arreglar los mensajes tipo toast y reemplazarlos por unos propios.
+   - Sistema de notificaciones propio creado en `CustomToast.tsx` con auto-dismiss, variantes (éxito, error, advertencia, info) y diseño moderno.
+   - Montado globalmente en `Layout.astro` y conectado a `use-toast.ts`.
 
-2. Necesito que se puedan establecer ubiaciones/direcciones con Google Maps o programas parecidos, y eso sirva para registrar direcciones dentro de los formularios y agregar una lógica completa, que siga la misma linea de seguridad y datos.
+2. [COMPLETADO] Necesito que se puedan establecer ubicaciones/direcciones con Google Maps o programas parecidos, y eso sirva para registrar direcciones dentro de los formularios y agregar una lógica completa, que siga la misma línea de seguridad y datos.
+   - Implementado `LocationPickerModal.tsx` con mapa interactivo, selector de coordenadas, presets de almacenes en Venezuela y autocompletado en el formulario.
 
-3. Mejorar legibilidad y orden de la información.
+3. [COMPLETADO] Mejorar legibilidad y orden de la información.
+   - Limpieza de textos residuales antiguos, traducción completa ES/EN en todas las vistas.
+   - Resolución de los 37 errores de compilación TypeScript.
+   - Sistema de contingencia Demo con datos de muestra realistas y acceso rápido en el login para el panel de administración.

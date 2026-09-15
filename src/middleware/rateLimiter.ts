@@ -32,19 +32,24 @@ export async function rateLimit(request: Request) {
     return { success: true }
   }
 
-  const { success, limit, remaining, reset } = await ratelimit.limit(ip)
+  try {
+    const { success, limit, remaining, reset } = await ratelimit.limit(ip)
 
-  if (!success) {
-    return {
-      success: false,
-      message: 'Demasiadas solicitudes. Por favor, intente más tarde.',
-      headers: {
-        'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
-        'X-RateLimit-Limit': limit.toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': reset.toString(),
-      },
+    if (!success) {
+      return {
+        success: false,
+        message: 'Demasiadas solicitudes. Por favor, intente más tarde.',
+        headers: {
+          'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
+          'X-RateLimit-Limit': limit.toString(),
+          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Reset': reset.toString(),
+        },
+      }
     }
+  } catch (error) {
+    // Redis no disponible (modo offline o demo), continuar sin bloqueo
+    return { success: true }
   }
 
   return { success: true }

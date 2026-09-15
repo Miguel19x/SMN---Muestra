@@ -1,9 +1,12 @@
+import React, { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect } from "@/components/ui/native-select"
 import { cn } from "@/lib/utils"
+import { MapPin } from "lucide-react"
 import type { ObjetoData, InfoFormProps, TranslationKey } from '../type/types'
 import { useLanguage } from '../additionals/scripts/i18n'
+import LocationPickerModal from "./LocationPickerModal"
 
 const estadosVenezuela = [
   "Distrito Capital", "Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", "Bolívar",
@@ -82,6 +85,17 @@ export default function AdditionalInfoForm({ formData, errors, onChange }: InfoF
     </div>
   )
 
+  const [locationModalTarget, setLocationModalTarget] = useState<'ubicacion_actual' | 'ultimo_lugar_conocido' | null>(null);
+
+  const handleLocationSelected = (address: string, state?: string) => {
+    if (locationModalTarget) {
+      onChange(locationModalTarget, address);
+      if (state && (!formData.estado || formData.estado === '')) {
+        onChange('estado', state);
+      }
+    }
+  };
+
   const currentDate = new Date().toISOString().split('T')[0];
 
   return (
@@ -128,13 +142,90 @@ export default function AdditionalInfoForm({ formData, errors, onChange }: InfoF
 
       {renderInput("condicion", "Form-HC")}
       {renderInput("estado_conservacion", "Form-D")}
-      {renderInput("ubicacion_actual", "Form-PlaceC")}
-      {renderInput("ultimo_lugar_conocido", "Form-LD")}
+
+      {/* Ubicación Actual con Selector de Mapa */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="ubicacion_actual">{translate('Form-PlaceC')}</Label>
+          <button
+            type="button"
+            onClick={() => setLocationModalTarget('ubicacion_actual')}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
+          >
+            <MapPin className="w-3.5 h-3.5" /> Seleccionar en Mapa
+          </button>
+        </div>
+        <div className="relative flex items-center">
+          <Input
+            type="text"
+            id="ubicacion_actual"
+            name="ubicacion_actual"
+            value={formData.ubicacion_actual || ''}
+            onChange={(e) => onChange('ubicacion_actual', e.target.value)}
+            className={cn("pr-24", errors.ubicacion_actual && "border-red-500")}
+            placeholder="Ej: Almacén Central, Galpón 4, Caracas"
+          />
+          <button
+            type="button"
+            onClick={() => setLocationModalTarget('ubicacion_actual')}
+            className="absolute right-1.5 px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs rounded border border-blue-500/30 flex items-center gap-1 transition-all"
+          >
+            <MapPin className="w-3 h-3" /> Mapa
+          </button>
+        </div>
+        {errors.ubicacion_actual && (
+          <p className="text-red-500 text-sm mt-1">{errors.ubicacion_actual}</p>
+        )}
+      </div>
+
+      {/* Último Lugar Conocido con Selector de Mapa */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="ultimo_lugar_conocido">{translate('Form-LD')}</Label>
+          <button
+            type="button"
+            onClick={() => setLocationModalTarget('ultimo_lugar_conocido')}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
+          >
+            <MapPin className="w-3.5 h-3.5" /> Seleccionar en Mapa
+          </button>
+        </div>
+        <div className="relative flex items-center">
+          <Input
+            type="text"
+            id="ultimo_lugar_conocido"
+            name="ultimo_lugar_conocido"
+            value={formData.ultimo_lugar_conocido || ''}
+            onChange={(e) => onChange('ultimo_lugar_conocido', e.target.value)}
+            className={cn("pr-24", errors.ultimo_lugar_conocido && "border-red-500")}
+            placeholder="Ej: Sede Puerto Cabello, Muelle 12"
+          />
+          <button
+            type="button"
+            onClick={() => setLocationModalTarget('ultimo_lugar_conocido')}
+            className="absolute right-1.5 px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs rounded border border-blue-500/30 flex items-center gap-1 transition-all"
+          >
+            <MapPin className="w-3 h-3" /> Mapa
+          </button>
+        </div>
+        {errors.ultimo_lugar_conocido && (
+          <p className="text-red-500 text-sm mt-1">{errors.ultimo_lugar_conocido}</p>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {renderInput("fecha_registro", "Form-DD", "date", "2010-01-01", currentDate)}
         {renderInput("hora_registro", "Form-DT", "time")}
       </div>
+
+      {/* Modal de Mapa Interactivo */}
+      <LocationPickerModal
+        isOpen={locationModalTarget !== null}
+        onClose={() => setLocationModalTarget(null)}
+        onSelectLocation={handleLocationSelected}
+        currentValue={locationModalTarget ? (formData[locationModalTarget] || '') : ''}
+        title={locationModalTarget === 'ubicacion_actual' ? "Ubicación Actual en Mapa" : "Último Lugar Conocido en Mapa"}
+      />
     </>
   )
 }

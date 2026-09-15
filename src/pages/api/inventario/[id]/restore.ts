@@ -13,6 +13,7 @@ import { verifyAuth, createUnauthorizedResponse } from '../../../../lib/auth/aut
 import { secureJsonResponse } from '../../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../../validators/schemas';
 import redis from '../../../../lib/redis';
+import { restoreDemoObjeto } from '../../../../lib/demoData';
 
 /**
  * POST /api/inventario/[id]/restore
@@ -26,13 +27,22 @@ export const POST: APIRoute = async ({ params, request }) => {
             return createUnauthorizedResponse(authResult.error);
         }
 
-        await connectDB();
-
         const { id } = params;
 
         if (!id) {
             return secureJsonResponse({ error: 'ID es requerido' }, 400);
         }
+
+        if (id.startsWith('demo-')) {
+            restoreDemoObjeto(id);
+            return secureJsonResponse({
+                success: true,
+                message: 'Objeto restaurado exitosamente (Modo Demo)',
+                id,
+            }, 200);
+        }
+
+        await connectDB();
 
         // ✅ Convert Public ID to MongoDB ObjectId
         const { publicIdMapper } = await import('../../../../lib/security/idObfuscation');

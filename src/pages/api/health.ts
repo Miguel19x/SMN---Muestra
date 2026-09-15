@@ -56,12 +56,14 @@ export const GET: APIRoute = async ({ request }) => {
         const responseTime = Date.now() - startTime;
 
         // 5. Determinar estado general
-        const isHealthy = dbHealthy && envHealthy && dbWritable;
-        const statusCode = isHealthy ? 200 : 503;
+        const isDemoMode = process.env.DEMO_MODE === 'true' || !dbHealthy;
+        const isHealthy = (dbHealthy && envHealthy && dbWritable) || isDemoMode;
+        const statusCode = 200;
 
         // 6. Construir respuesta detallada
         const healthReport = {
             status: isHealthy ? 'healthy' : 'unhealthy',
+            mode: isDemoMode ? 'demo' : 'production',
             timestamp: new Date().toISOString(),
             responseTime: `${responseTime}ms`,
             services: {

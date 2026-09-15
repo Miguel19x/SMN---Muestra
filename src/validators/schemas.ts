@@ -34,6 +34,9 @@ export const CodigoSchema = z.string().regex(
     'Código inválido'
 );
 
+// ✅ Alias para compatibilidad
+export const CedulaSchema = CodigoSchema;
+
 /**
  * ✅ Validador de fecha ISO
  */

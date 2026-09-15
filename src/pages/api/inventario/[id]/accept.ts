@@ -19,6 +19,7 @@ import { secureJsonResponse } from '../../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../../validators/schemas';
 import { ObjetoService } from '../../../../services/objeto.service';
 import redis from '../../../../lib/redis';
+import { acceptDemoObjeto } from '../../../../lib/demoData';
 
 const objetoService = new ObjetoService();
 
@@ -34,13 +35,22 @@ export const POST: APIRoute = async ({ params, request }) => {
             return createUnauthorizedResponse(authResult.error);
         }
 
-        await connectDB();
-
         const { id } = params;
 
         if (!id) {
             return secureJsonResponse({ error: 'ID es requerido' }, 400);
         }
+
+        if (id.startsWith('demo-')) {
+            acceptDemoObjeto(id);
+            return secureJsonResponse({
+                success: true,
+                message: 'Registro aprobado exitosamente (Modo Demo)',
+                id,
+            }, 200);
+        }
+
+        await connectDB();
 
         // ✅ Convert Public ID to MongoDB ObjectId
         const { publicIdMapper } = await import('../../../../lib/security/idObfuscation');

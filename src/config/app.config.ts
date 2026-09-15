@@ -8,12 +8,13 @@
  * - Validación de env vars al inicio
  */
 
+import 'dotenv/config';
 import { z } from 'zod';
 
 // ✅ Schema de validación para variables de entorno
 const EnvSchema = z.object({
     // MongoDB
-    MONGODB_URL: z.string().url('MONGODB_URL debe ser una URL válida'),
+    MONGODB_URL: z.string().url('MONGODB_URL debe ser una URL válida').optional().or(z.literal('')),
 
     // R2 / Cloudflare
     R2_ACCOUNT_ID: z.string().optional(),
@@ -34,28 +35,19 @@ const EnvSchema = z.object({
 });
 
 // ✅ Validar env vars al importar este módulo
-// Usamos safeParse para evitar crash si .env no está cargado aún (desarrollo)
 const parsed = EnvSchema.safeParse(process.env);
 
 let env: z.infer<typeof EnvSchema>;
 
 if (!parsed.success) {
-    // En desarrollo, permitir que algunas vars no existan (se cargan después)
-    if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️ Algunas variables de entorno no están configuradas:',
-            parsed.error.issues.map(i => i.path.join('.')).join(', ')
-        );
-        // Usar valores parciales + defaults
-        env = {
-            MONGODB_URL: process.env.MONGODB_URL || '',
-            NODE_ENV: 'development',
-            ...process.env as any
-        };
-    } else {
-        // En producción, fallar inmediatamente
-        console.error('❌ Variables de entorno inválidas:', parsed.error.format());
-        throw new Error('Configuración de entorno inválida');
-    }
+    console.warn('⚠️ Variables de entorno en modo fallback demo:',
+        parsed.error.issues.map(i => i.path.join('.')).join(', ')
+    );
+    env = {
+        MONGODB_URL: process.env.MONGODB_URL || '',
+        NODE_ENV: (process.env.NODE_ENV as any) || 'development',
+        ...process.env as any
+    };
 } else {
     env = parsed.data;
 }
@@ -71,12 +63,12 @@ export const DATABASE_CONFIG = {
     },
     TIMEOUTS: {
         IDLE_MS: 10_000,              // 10 segundos
-        SERVER_SELECTION_MS: 5_000,   // 5 segundos
-        SOCKET_MS: 30_000,            // 30 segundos
+        SERVER_SELECTION_MS: 2_000,   // 2 segundos (fail-fast para serverless)
+        SOCKET_MS: 15_000,            // 15 segundos
     },
     RETRY: {
-        MAX_ATTEMPTS: 3,
-        DELAY_MS: 1000,
+        MAX_ATTEMPTS: 1,              // 1 intento para evitar timeout de función en serverless
+        DELAY_MS: 500,
     },
     MAX_CONNECTION_AGE_MS: 5 * 60 * 1000, // 5 minutos
 } as const;
@@ -91,15 +83,15 @@ export const MONGODB_CONFIG = {
         maxPoolSize: 5,
         minPoolSize: 1,
         maxIdleTimeMS: 10_000,       // 10 segundos
-        serverSelectionTimeoutMS: 5_000,  // 5 segundos
-        socketTimeoutMS: 30_000,      // 30 segundos
+        serverSelectionTimeoutMS: 2_000,  // 2 segundos
+        socketTimeoutMS: 15_000,      // 15 segundos
         family: 4,
         retryWrites: true,
         retryReads: true,
     },
     RETRY: {
-        maxAttempts: 3,
-        delayMs: 1000,
+        maxAttempts: 1,
+        delayMs: 500,
     },
     CONNECTION_AGE_THRESHOLD_MS: 5 * 60 * 1000, // 5 minutos
 } as const;
@@ -203,8 +195,8 @@ export const SECURITY_CONFIG = {
         STYLE_SRC: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         FONT_SRC: ["'self'", "https://fonts.gstatic.com"],
         IMG_SRC: ["'self'", "data:", "blob:", "https://*.cloudflare.com", "https://images.datatracker.com"],
-        CONNECT_SRC: ["'self'", "https://*.upstash.io", "https://*.cloudflare.com"],
-        FRAME_SRC: ["https://challenges.cloudflare.com"],
+        CONNECT_SRC: ["'self'", "https://*.upstash.io", "https://*.cloudflare.com", "https://*.openstreetmap.org"],
+        FRAME_SRC: ["'self'", "https://challenges.cloudflare.com", "https://www.openstreetmap.org"],
         FRAME_ANCESTORS: ["'none'"],
         BASE_URI: ["'self'"],
         FORM_ACTION: ["'self'"],

@@ -1,6 +1,7 @@
 ---
 import Navbar from "../components/navbar.astro";
 import Footer from "../components/footer.astro";
+import CustomToaster from "../components/ui/CustomToast.tsx";
 import "@/styles/globals.css";
 import "@fontsource-variable/roboto-flex";
 
@@ -61,12 +62,13 @@ const lang = Astro.cookies.get("NEXT_LOCALE")?.value || "es";
 			(function () {
 				var translations = {
 					es: {
-						"Title-2": "LISTADO DE FALLECIDOS",
-						Phrase: "¡Sus nombres jamás deben ser olvidados!",
+						"Title-2": "ARCHIVAR",
+						"Phrase-1": "La plataforma inteligente de inventario",
+						"Phrase-2": "Registro histórico de objetos dados de baja",
 						"Navbar-1": "Inventario Activo",
-						"Navbar-2": "Subir Información",
+						"Navbar-2": "Registrar Objeto",
 						"Navbar-3": "Archivados",
-						"Navbar-4": "Estadísticas",
+						"Navbar-4": "Analíticas",
 						"Title-1": "DATATRACKER",
 						"Title-1.3": "#INVENTARIO",
 						"Title-3": "Registrar Nuevo Objeto",
@@ -74,18 +76,18 @@ const lang = Astro.cookies.get("NEXT_LOCALE")?.value || "es";
 						"Component-2": "Listado de Objetos Registrados",
 					},
 					en: {
-						"Title-2": "LIST OF DECEASED",
-						Phrase: "Their names must never be forgotten!",
-						"Navbar-1": "List of Kidnapped People",
-						"Navbar-2": "Upload Information",
-						"Navbar-3": "List of Deceased People",
-						"Navbar-4": "Statistics",
-						"Title-1": "NO MORE KIDNAPPINGS",
-						"Title-1.3": "#NOMOREKIDNAPPEDPEOPLE",
-						"Title-3":
-							"Upload Information about the kidnapped person",
-						"Component-1": "Search Detainees",
-						"Component-2": "List of Abductees",
+						"Title-2": "ARCHIVED",
+						"Phrase-1": "The intelligent inventory platform",
+						"Phrase-2": "Historical record of decommissioned items",
+						"Navbar-1": "Active Inventory",
+						"Navbar-2": "Register Object",
+						"Navbar-3": "Archived",
+						"Navbar-4": "Analytics",
+						"Title-1": "DATATRACKER",
+						"Title-1.3": "#INVENTORY",
+						"Title-3": "Register New Object",
+						"Component-1": "Search Records",
+						"Component-2": "List of Registered Objects",
 					},
 				};
 				function getCookie(n) {
@@ -135,6 +137,7 @@ const lang = Astro.cookies.get("NEXT_LOCALE")?.value || "es";
 			<slot />
 		</main>
 		<Footer />
+		<CustomToaster client:load />
 	</body>
 </html>
 <style is:global>

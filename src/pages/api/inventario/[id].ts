@@ -19,6 +19,7 @@ import { secureJsonResponse } from '../../../middleware/securityHeaders';
 import { ObjectIdSchema } from '../../../validators/schemas';
 import { ObjetoService } from '../../../services/objeto.service';
 import { createPublicId } from '../../../lib/security/idObfuscation';
+import { getDemoObjetoById, updateDemoObjeto } from '../../../lib/demoData';
 
 const { ObjectId } = Types;
 const objetoService = new ObjetoService();
@@ -29,12 +30,28 @@ const objetoService = new ObjetoService();
  */
 export const GET: APIRoute = async ({ params }) => {
     try {
-        await connectDB();
-
         const { id } = params;
 
         if (!id) {
             return secureJsonResponse({ error: 'ID es requerido' }, 400);
+        }
+
+        if (id.startsWith('demo-')) {
+            const demoObj = getDemoObjetoById(id);
+            if (demoObj) {
+                return secureJsonResponse(demoObj, 200);
+            }
+            return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
+        }
+
+        try {
+            await connectDB();
+        } catch (dbErr) {
+            const fallback = getDemoObjetoById(id);
+            if (fallback) {
+                return secureJsonResponse(fallback, 200);
+            }
+            return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
         }
 
         // ✅ REFACTORIZACIÓN: Resolver ID público a MongoDB ObjectId
@@ -117,13 +134,27 @@ export const PUT: APIRoute = async ({ params, request }) => {
             return createUnauthorizedResponse(authResult.error);
         }
 
-        await connectDB();
-
         const { id } = params;
 
         if (!id) {
             return secureJsonResponse({ error: 'ID es requerido' }, 400);
         }
+
+        if (id.startsWith('demo-')) {
+            let body: any;
+            try {
+                body = await request.json();
+            } catch {
+                return secureJsonResponse({ error: 'JSON inválido' }, 400);
+            }
+            const updated = updateDemoObjeto(id, body);
+            if (updated) {
+                return secureJsonResponse({ success: true, message: 'Registro demo actualizado', data: updated }, 200);
+            }
+            return secureJsonResponse({ error: 'Registro no encontrado' }, 404);
+        }
+
+        await connectDB();
 
         // ✅ Validación estricta de ObjectId
         const validationResult = ObjectIdSchema.safeParse(id);

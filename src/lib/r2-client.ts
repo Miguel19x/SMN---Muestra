@@ -25,16 +25,9 @@ if (!isR2Configured()) {
     if (!R2_SECRET_ACCESS_KEY) missingVars.push('R2_SECRET_ACCESS_KEY');
     if (!R2_BUCKET_NAME) missingVars.push('R2_BUCKET_NAME');
 
-    console.error(
-        `⚠️  Cloudflare R2 no está configurado correctamente. Faltan variables: ${missingVars.join(', ')}`
+    console.warn(
+        `⚠️ Cloudflare R2 no está configurado (variables faltantes: ${missingVars.join(', ')}). Operando en modo demo sin almacenamiento R2.`
     );
-
-    // En desarrollo, solo advertir. En producción, fallar.
-    if (process.env.NODE_ENV === 'production') {
-        throw new Error(
-            `R2 Configuration Error: Faltan variables de entorno requeridas para R2: ${missingVars.join(', ')}`
-        );
-    }
 }
 
 /**

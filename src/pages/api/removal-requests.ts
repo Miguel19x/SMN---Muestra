@@ -198,9 +198,9 @@ export const POST: APIRoute = async ({ request }) => {
         const desaparecidoObjectId = new ObjectId(data.desaparecido_id);
 
         // ✅ MEJORA: Verificar existencia del registro
-        const desaparecido = await Desaparecido
+        const desaparecido = await Objeto
             .findById(desaparecidoObjectId)
-            .select('nombre cedula')
+            .select('nombre codigo')
             .lean();
 
         if (!desaparecido) {
@@ -312,7 +312,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
             // Si se aprobó, eliminar el registro
             if (status === 'approved') {
-                await Desaparecido.findByIdAndDelete(
+                await Objeto.findByIdAndDelete(
                     removalRequest.desaparecido_id,
                     { session }
                 );

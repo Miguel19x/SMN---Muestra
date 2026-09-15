@@ -76,7 +76,7 @@ export const GET: APIRoute = async ({ request }) => {
             return secureJsonResponse(
                 {
                     error: 'Parámetros inválidos',
-                    details: queryResult.error.format(),
+                    details: queryResult.error.issues,
                 },
                 400
             );

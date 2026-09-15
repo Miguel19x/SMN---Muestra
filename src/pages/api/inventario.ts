@@ -77,7 +77,7 @@ const CreateObjetoSchema = z.object({
     ),
     imagen: z.preprocess(
         (val) => val === '' || val === undefined ? undefined : val,
-        z.string().url().max(VALIDATION_CONFIG.MAX_STRING_LENGTH.URL).optional()
+        z.url().max(VALIDATION_CONFIG.MAX_STRING_LENGTH.URL).optional()
     ),
     'cf-turnstile-response': z.string().optional(),
     captchaToken: z.string().optional(),

@@ -44,7 +44,7 @@ const ExpandedRow: React.FC<ExpandedRowProps> = ({ item, getAntiguedadStage, get
     },
   });
 
-  const handleSubmitRemoval = useCallback((e: React.FormEvent) => {
+  const handleSubmitRemoval = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!removalReason.trim()) return;
 

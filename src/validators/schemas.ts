@@ -99,8 +99,7 @@ export const CreateObjetoSchema = z.object({
 
     fecha_registro: ISODateSchema,
 
-    imagen: z.string()
-        .url('URL de imagen inválida')
+    imagen: z.url('URL de imagen inválida')
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.URL)
         .optional(),
 
@@ -146,13 +145,11 @@ export const CreateRemovalRequestSchema = z.object({
         .max(BUSINESS_CONFIG.REMOVAL_REQUEST.MAX_REASON_LENGTH, 'Razón muy larga')
         .trim(),
 
-    evidence_url: z.string()
-        .url('URL de evidencia inválida')
+    evidence_url: z.url('URL de evidencia inválida')
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.URL)
         .optional(),
 
-    requester_email: z.string()
-        .email('Email inválido')
+    requester_email: z.email('Email inválido')
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.MEDIUM)
         .optional(),
 

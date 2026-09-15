@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import './BreadForm.css';
 
 const BreadForm = () => {
@@ -24,7 +24,7 @@ const BreadForm = () => {
     setSelectedBreads(selectedBreads.filter(bread => bread !== breadToRemove));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     console.log('Pedido:', selectedBreads);
   };

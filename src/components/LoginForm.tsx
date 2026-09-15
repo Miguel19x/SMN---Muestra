@@ -58,7 +58,7 @@ function LoginFormContent() {
     }
   }, [onCaptchaVerify])
 
-  const handleFirstStep = async (e: React.FormEvent) => {
+  const handleFirstStep = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     if (!captchaToken) {
       toast({
@@ -105,7 +105,7 @@ function LoginFormContent() {
     }
   }
 
-  const handleSecondStep = async (e: React.FormEvent) => {
+  const handleSecondStep = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
@@ -162,7 +162,7 @@ function LoginFormContent() {
     }
   }
 
-  const handleThirdStep = async (e: React.FormEvent) => {
+  const handleThirdStep = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setIsLoading(true)
 

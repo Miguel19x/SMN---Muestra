@@ -42,8 +42,8 @@ const CreateRemovalRequestSchema = z.object({
     twitter_username: z.string().max(50).optional(),
     twitter_name: z.string().max(100).optional(),
     reason: z.string().min(10).max(CONFIG.MAX_REASON_LENGTH),
-    evidence_url: z.string().url().max(CONFIG.MAX_EVIDENCE_URL_LENGTH).optional(),
-    requester_email: z.string().email().optional(),
+    evidence_url: z.url().max(CONFIG.MAX_EVIDENCE_URL_LENGTH).optional(),
+    requester_email: z.email().optional(),
 });
 
 const UpdateRemovalRequestSchema = z.object({
@@ -184,7 +184,7 @@ export const POST: APIRoute = async ({ request }) => {
             return secureJsonResponse(
                 {
                     error: 'Datos inválidos',
-                    details: validationResult.error.format(),
+                    details: validationResult.error.issues,
                 },
                 400
             );
@@ -282,7 +282,7 @@ export const PUT: APIRoute = async ({ request }) => {
             return secureJsonResponse(
                 {
                     error: 'Datos inválidos',
-                    details: validationResult.error.format(),
+                    details: validationResult.error.issues,
                 },
                 400
             );

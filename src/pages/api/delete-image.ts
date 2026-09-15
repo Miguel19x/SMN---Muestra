@@ -20,8 +20,7 @@ import { VALIDATION_CONFIG } from '../../config/app.config';
 
 // ✅ Validación del request
 const DeleteImageSchema = z.object({
-    imageUrl: z.string()
-        .url('URL inválida')
+    imageUrl: z.url('URL inválida')
         .max(VALIDATION_CONFIG.MAX_STRING_LENGTH.URL),
 });
 
@@ -53,7 +52,7 @@ export const POST: APIRoute = async ({ request }) => {
             return secureJsonResponse(
                 {
                     error: 'Datos inválidos',
-                    details: validationResult.error.format(),
+                    details: validationResult.error.issues,
                 },
                 400
             );

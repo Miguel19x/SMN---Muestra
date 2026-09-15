@@ -76,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
             return secureJsonResponse(
                 {
                     error: 'Datos inválidos',
-                    details: validationResult.error.format(),
+                    details: validationResult.error.issues,
                 },
                 400
             );

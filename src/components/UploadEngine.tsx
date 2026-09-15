@@ -90,7 +90,7 @@ function UploadEngineContent() {
     };
   }, [onCaptchaVerify]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.SyntheticEvent) => {
     e.preventDefault()
     if (!isFormValid || isSubmitting) return
 

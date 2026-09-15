@@ -210,14 +210,9 @@ export function updateTranslations(lang: Language) {
 }
 
 export async function loadLanguage(lang: string): Promise<void> {
-  if (!isValidLanguage(lang) || translations[lang]) return;
-
-  try {
-    const module = await import(`../i18n/${lang}.json`);
-    translations[lang] = module.default;
-  } catch (error) {
-    console.error(`Failed to load language: ${lang}`, error);
-  }
+  // es y en ya están incluidos estáticamente en el bundle
+  if (!isValidLanguage(lang)) return;
+  return Promise.resolve();
 }
 
 export function initializeLanguage() {

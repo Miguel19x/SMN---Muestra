@@ -14,7 +14,7 @@ import { z } from 'zod';
 // ✅ Schema de validación para variables de entorno
 const EnvSchema = z.object({
     // MongoDB
-    MONGODB_URL: z.string().url('MONGODB_URL debe ser una URL válida').optional().or(z.literal('')),
+    MONGODB_URL: z.url('MONGODB_URL debe ser una URL válida').optional().or(z.literal('')),
 
     // R2 / Cloudflare
     R2_ACCOUNT_ID: z.string().optional(),
@@ -23,7 +23,7 @@ const EnvSchema = z.object({
     R2_BUCKET_NAME: z.string().optional(),
 
     // Redis / Upstash
-    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
     // Turnstile (Cloudflare CAPTCHA)
@@ -31,7 +31,7 @@ const EnvSchema = z.object({
 
     // App
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PUBLIC_SITE_URL: z.string().url().optional(),
+    PUBLIC_SITE_URL: z.url().optional(),
 });
 
 // ✅ Validar env vars al importar este módulo

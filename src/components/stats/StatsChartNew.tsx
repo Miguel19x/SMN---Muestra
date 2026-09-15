@@ -8,14 +8,16 @@ import {
     ResponsiveContainer,
     PieChart,
     Pie,
-    Cell,
     AreaChart,
     Area,
     Sector,
 } from 'recharts';
+import * as RechartsModule from 'recharts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLanguage } from '../additionals/scripts/i18n';
+
+const ChartCell: any = (RechartsModule as any).Cell;
 
 // Solemn, desaturated color palette for human rights dashboard
 export const STATS_COLORS = {
@@ -241,7 +243,7 @@ export function StatsBarChart({
                         }}
                     >
                         {data.map((_, index) => (
-                            <Cell
+                            <ChartCell
                                 key={`cell-${index}`}
                                 fill={selectedIndex === index ? STATS_COLORS.secondary : color}
                             />
@@ -363,7 +365,7 @@ export function StatsDonutChart({
                         labelLine={false}
                     >
                         {data.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                            <ChartCell key={`cell-${index}`} fill={colors[index % colors.length]} />
                         ))}
                     </Pie>
                     <Tooltip

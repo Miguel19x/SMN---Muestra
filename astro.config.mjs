@@ -15,6 +15,12 @@ export default defineConfig({
     applyBaseStyles: false,
   })],
 
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 1200,
+    },
+  },
+
   adapter: vercel({
     maxDuration: 30
   })

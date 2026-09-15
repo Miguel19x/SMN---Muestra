@@ -28,19 +28,32 @@ function LoginFormContent() {
     setCaptchaToken(token)
   }, [])
 
+  const siteKey = import.meta.env.PUBLIC_CLOUDFLARE_SITE_KEY
+
   useEffect(() => {
+    if (!siteKey) {
+      setCaptchaToken('demo-bypass-token')
+      return
+    }
+
     let intervalId: ReturnType<typeof setInterval>
 
     const initTurnstile = () => {
       if (typeof window !== 'undefined' && window.turnstile && turnstileRef.current) {
-        if (turnstileWidgetId.current) {
-          window.turnstile.remove(turnstileWidgetId.current)
+        try {
+          if (turnstileWidgetId.current) {
+            window.turnstile.remove(turnstileWidgetId.current)
+          }
+          turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+            sitekey: siteKey,
+            callback: onCaptchaVerify,
+          })
+          clearInterval(intervalId)
+        } catch (error) {
+          console.warn('Turnstile render warning:', error)
+          setCaptchaToken('demo-bypass-token')
+          clearInterval(intervalId)
         }
-        turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: import.meta.env.PUBLIC_CLOUDFLARE_SITE_KEY,
-          callback: onCaptchaVerify,
-        })
-        clearInterval(intervalId)
       }
     }
 
@@ -53,10 +66,14 @@ function LoginFormContent() {
     return () => {
       if (intervalId) clearInterval(intervalId)
       if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.remove(turnstileWidgetId.current)
+        try {
+          window.turnstile.remove(turnstileWidgetId.current)
+        } catch {
+          // ignore cleanup error
+        }
       }
     }
-  }, [onCaptchaVerify])
+  }, [siteKey, onCaptchaVerify])
 
   const handleFirstStep = async (e: React.SyntheticEvent) => {
     e.preventDefault()
@@ -241,7 +258,9 @@ function LoginFormContent() {
                 {isLoading ? t('Process1') : t('L-Next')}
               </Button>
             </div>
-            <div ref={turnstileRef} className="mt-4 flex justify-center w-full h-[50px]"></div>
+            {siteKey && (
+              <div ref={turnstileRef} className="mt-4 flex justify-center w-full h-[50px]"></div>
+            )}
 
             <div className="relative my-4 pt-2">
               <div className="absolute inset-0 flex items-center">

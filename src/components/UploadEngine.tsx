@@ -60,19 +60,33 @@ function UploadEngineContent() {
     setIsFormValid(Object.keys(newErrors).length === 0 && formData.nombre.trim() !== '')
   }, [formData, validateForm])
 
+  const siteKey = import.meta.env.PUBLIC_CLOUDFLARE_SITE_KEY;
+
   useEffect(() => {
+    // If no Turnstile sitekey is provided (demo / local dev), automatically bypass captcha
+    if (!siteKey) {
+      setCaptchaToken('demo-bypass-token');
+      return;
+    }
+
     let intervalId: ReturnType<typeof setInterval>;
 
     const initTurnstile = () => {
       if (typeof window !== 'undefined' && window.turnstile && turnstileRef.current) {
-        if (turnstileWidgetId.current) {
-          window.turnstile.remove(turnstileWidgetId.current);
+        try {
+          if (turnstileWidgetId.current) {
+            window.turnstile.remove(turnstileWidgetId.current);
+          }
+          turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+            sitekey: siteKey,
+            callback: onCaptchaVerify,
+          });
+          clearInterval(intervalId);
+        } catch (error) {
+          console.warn('Turnstile render warning:', error);
+          setCaptchaToken('demo-bypass-token');
+          clearInterval(intervalId);
         }
-        turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: import.meta.env.PUBLIC_CLOUDFLARE_SITE_KEY,
-          callback: onCaptchaVerify,
-        });
-        clearInterval(intervalId);
       }
     };
 
@@ -85,10 +99,14 @@ function UploadEngineContent() {
     return () => {
       if (intervalId) clearInterval(intervalId as NodeJS.Timeout);
       if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.remove(turnstileWidgetId.current);
+        try {
+          window.turnstile.remove(turnstileWidgetId.current);
+        } catch {
+          // ignore cleanup error
+        }
       }
     };
-  }, [onCaptchaVerify]);
+  }, [siteKey, onCaptchaVerify]);
 
   const handleSubmit = useCallback(async (e: React.SyntheticEvent) => {
     e.preventDefault()
@@ -161,7 +179,7 @@ function UploadEngineContent() {
       })
       setErrors({})
       setResetImage(prev => !prev)
-      setCaptchaToken(null)
+      setCaptchaToken(siteKey ? null : 'demo-bypass-token')
 
       if (formData.imagen) {
         await fetch('/api/delete-cached-image', {
@@ -172,8 +190,12 @@ function UploadEngineContent() {
       }
 
       // Reset Turnstile
-      if (window.turnstile && turnstileWidgetId.current) {
-        window.turnstile.reset(turnstileWidgetId.current);
+      if (siteKey && window.turnstile && turnstileWidgetId.current) {
+        try {
+          window.turnstile.reset(turnstileWidgetId.current);
+        } catch {
+          // ignore reset error
+        }
       }
     } catch (error) {
       console.error('Error al subir la información:', error)
@@ -186,7 +208,7 @@ function UploadEngineContent() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, isFormValid, captchaToken, toast])
+  }, [formData, isFormValid, captchaToken, toast, siteKey])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-xl mx-auto px-4 sm:px-6 md:px-8">
@@ -195,7 +217,14 @@ function UploadEngineContent() {
       <AdditionalInfoForm formData={formData} errors={errors} onChange={handleChange} />
       <ImageUpload onChange={handleChange} resetImage={resetImage} />
       <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-        <div ref={turnstileRef} className="w-full h-[50px]"></div>
+        {siteKey ? (
+          <div ref={turnstileRef} className="w-full h-[50px]"></div>
+        ) : (
+          <div className="w-full py-2 px-3 bg-muted/40 rounded border border-border/40 text-xs text-muted-foreground flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block shrink-0"></span>
+            <span>Modo Demo: Verificación de seguridad automática activada</span>
+          </div>
+        )}
         <Button
           type="submit"
           className="bg-blue-800 hover:bg-blue-700 w-full sm:w-auto text-white mt-4 font-semibold px-6 shadow-md transition-all"

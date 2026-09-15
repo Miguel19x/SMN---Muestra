@@ -79,12 +79,5 @@
     "@vitest/coverage-v8": "4.0.18",
     "jsdom": "^27.4.0",
     "vitest": "^4.1.11"
-  },
-  "pnpm": {
-    "overrides": {
-      "@floating-ui/react-dom": "^2.1.6",
-      "@radix-ui/react-slot": "^1.2.4",
-      "@radix-ui/react-primitive": "^2.1.4"
-    }
   }
 }
